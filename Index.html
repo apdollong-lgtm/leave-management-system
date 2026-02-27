@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ระบบลางานออนไลน์</title>
+    <style>
+      :root {
+        --bg: #f3f5f9;
+        --card: #ffffff;
+        --primary: #1f6feb;
+        --text: #101828;
+        --muted: #667085;
+        --border: #e4e7ec;
+        --danger: #ef4444;
+        --success: #12b76a;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Noto Sans Thai", "Sarabun", system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .container { max-width: 920px; margin: 0 auto; padding: 18px 16px 100px; }
+      .topbar {
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+      }
+      .title { font-size: 32px; font-weight: 800; margin: 0; }
+      .grid { display: grid; gap: 12px; }
+      .stats { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 16px; }
+      .card {
+        background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px;
+        box-shadow: 0 8px 24px rgba(16, 24, 40, 0.05);
+      }
+      .stat-label { color: var(--muted); font-size: 14px; }
+      .stat-value { font-size: 36px; margin-top: 4px; font-weight: 800; }
+      .panel { margin-bottom: 14px; }
+      .panel h2 { margin: 0 0 12px; font-size: 24px; }
+      .form-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+      label { display: flex; flex-direction: column; gap: 8px; font-weight: 600; color: #344054; font-size: 15px; }
+      input, select, textarea {
+        width: 100%; border: 1px solid #d0d5dd; border-radius: 12px; padding: 12px 14px;
+        font-size: 15px; font-family: inherit; background: #fff;
+      }
+      textarea { min-height: 90px; resize: vertical; }
+      .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+      button {
+        border: none; border-radius: 12px; padding: 11px 18px; font-size: 15px;
+        font-weight: 700; cursor: pointer;
+      }
+      .btn-primary { background: var(--primary); color: white; }
+      .btn-secondary { background: #e7eefc; color: #1349a1; }
+      .btn-approve { background: #e7f8ef; color: #0e8f53; }
+      .btn-reject { background: #fee4e2; color: #b42318; }
+      .status {
+        display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 999px; padding: 4px 12px; font-size: 12px; font-weight: 700;
+      }
+      .st-pending { background: #fffaeb; color: #b54708; }
+      .st-approved { background: #ecfdf3; color: #067647; }
+      .st-rejected { background: #fef3f2; color: #b42318; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 14px; vertical-align: top; }
+      .toast {
+        position: fixed; right: 16px; bottom: 16px; background: #111827; color: #fff;
+        padding: 10px 14px; border-radius: 10px; opacity: 0; transform: translateY(8px);
+        transition: .2s ease;
+      }
+      .toast.show { opacity: 1; transform: translateY(0); }
+      .badge { padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #dbeafe; color: #1d4ed8; }
+      @media (max-width: 640px) {
+        .title { font-size: 26px; }
+        th:nth-child(3), td:nth-child(3), th:nth-child(4), td:nth-child(4) { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <div class="topbar">
+        <h1 class="title">แดชบอร์ดระบบลางาน</h1>
+        <button class="btn-secondary" onclick="loadDashboard()">รีเฟรชข้อมูล</button>
+      </div>
+
+      <section class="grid stats">
+        <article class="card">
+          <div class="stat-label">คำขอรออนุมัติ</div>
+          <div class="stat-value" id="pendingCount">0</div>
+        </article>
+        <article class="card">
+          <div class="stat-label">อนุมัติวันนี้</div>
+          <div class="stat-value" id="approvedTodayCount">0</div>
+        </article>
+        <article class="card">
+          <div class="stat-label">พนักงานที่กำลังลา</div>
+          <div class="stat-value" id="onLeaveCount">0</div>
+        </article>
+      </section>
+
+      <section class="panel card">
+        <h2>ยื่นคำขอลา</h2>
+        <form id="leaveForm">
+          <div class="grid form-grid">
+            <label>ชื่อ-นามสกุล
+              <input name="name" placeholder="เช่น ศิริพร ใจดี" required />
+            </label>
+            <label>แผนก
+              <input name="department" placeholder="เช่น Engineering" />
+            </label>
+            <label>ประเภทการลา
+              <select name="leaveType" required>
+                <option value="">-- เลือกประเภท --</option>
+                <option>ลาพักร้อน</option>
+                <option>ลาป่วย</option>
+                <option>ลากิจ</option>
+                <option>ลาคลอด</option>
+                <option>ทำงานนอกสถานที่ (WFH)</option>
+              </select>
+            </label>
+            <label>วันที่เริ่มลา
+              <input type="date" name="startDate" required />
+            </label>
+            <label>วันที่สิ้นสุด
+              <input type="date" name="endDate" required />
+            </label>
+            <label style="grid-column: 1 / -1;">เหตุผลการลา
+              <textarea name="reason" required placeholder="ระบุเหตุผลโดยย่อ"></textarea>
+            </label>
+          </div>
+          <div class="actions">
+            <button type="submit" class="btn-primary">ส่งคำขอลา</button>
+            <button type="button" class="btn-secondary" onclick="seedData()">ใส่ข้อมูลตัวอย่าง</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel card">
+        <h2>รายการคำขอลาล่าสุด</h2>
+        <div style="overflow:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>พนักงาน</th>
+                <th>ประเภท</th>
+                <th>ช่วงวันที่</th>
+                <th>เหตุผล</th>
+                <th>สถานะ</th>
+                <th>การจัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="requestRows"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+      function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2300);
+      }
+
+      function statusClass(status) {
+        if (status === 'อนุมัติ') return 'st-approved';
+        if (status === 'ไม่อนุมัติ') return 'st-rejected';
+        return 'st-pending';
+      }
+
+      function renderRows(requests) {
+        const tbody = document.getElementById('requestRows');
+        tbody.innerHTML = '';
+
+        if (!requests || requests.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#667085;">ยังไม่มีข้อมูลคำขอลา</td></tr>';
+          return;
+        }
+
+        requests.forEach((r) => {
+          const tr = document.createElement('tr');
+          const period = `${r['วันที่เริ่มลา']} - ${r['วันที่สิ้นสุด']} (${r['จำนวนวัน']} วัน)`;
+
+          tr.innerHTML = `
+            <td><strong>${r['ชื่อพนักงาน']}</strong><br><span class="badge">${r['แผนก'] || '-'}</span></td>
+            <td>${r['ประเภทการลา']}</td>
+            <td>${period}</td>
+            <td>${r['เหตุผล'] || '-'}</td>
+            <td><span class="status ${statusClass(r['สถานะ'])}">${r['สถานะ']}</span></td>
+            <td>
+              <div class="actions" style="margin:0;">
+                <button class="btn-approve" ${r['สถานะ'] !== 'รออนุมัติ' ? 'disabled' : ''} onclick="approve('${r['รหัสคำขอ']}')">อนุมัติ</button>
+                <button class="btn-reject" ${r['สถานะ'] !== 'รออนุมัติ' ? 'disabled' : ''} onclick="reject('${r['รหัสคำขอ']}')">ไม่อนุมัติ</button>
+              </div>
+            </td>`;
+
+          tbody.appendChild(tr);
+        });
+      }
+
+      function runServer(fnName, args = [], onSuccess, onError) {
+        if (window.google && google.script && google.script.run) {
+          let runner = google.script.run
+            .withSuccessHandler(onSuccess)
+            .withFailureHandler((err) => onError(err));
+          runner[fnName](...args);
+          return;
+        }
+
+        if (fnName === 'getDashboardData') {
+          onSuccess({
+            stats: { pending: 2, approvedToday: 5, onLeave: 3 },
+            requests: [
+              {
+                'รหัสคำขอ': 'MOCK-001',
+                'ชื่อพนักงาน': 'Sarah Johnson',
+                'แผนก': 'Design',
+                'ประเภทการลา': 'ลาป่วย',
+                'วันที่เริ่มลา': '2026-03-01',
+                'วันที่สิ้นสุด': '2026-03-03',
+                'จำนวนวัน': 3,
+                'เหตุผล': 'มีอาการไข้หวัด',
+                'สถานะ': 'รออนุมัติ'
+              },
+              {
+                'รหัสคำขอ': 'MOCK-002',
+                'ชื่อพนักงาน': 'Michael Chen',
+                'แผนก': 'Engineering',
+                'ประเภทการลา': 'ลาพักร้อน',
+                'วันที่เริ่มลา': '2026-03-08',
+                'วันที่สิ้นสุด': '2026-03-12',
+                'จำนวนวัน': 5,
+                'เหตุผล': 'พักผ่อนประจำปี',
+                'สถานะ': 'อนุมัติ'
+              }
+            ]
+          });
+          return;
+        }
+
+        onSuccess({ success: true, message: 'โหมดพรีวิวสำเร็จ', requestId: 'MOCK-ID' });
+      }
+
+      function loadDashboard() {
+        runServer(
+          'getDashboardData',
+          [],
+          (data) => {
+            document.getElementById('pendingCount').textContent = data.stats.pending;
+            document.getElementById('approvedTodayCount').textContent = data.stats.approvedToday;
+            document.getElementById('onLeaveCount').textContent = data.stats.onLeave;
+            renderRows(data.requests);
+          },
+          (err) => showToast(`โหลดข้อมูลไม่สำเร็จ: ${err.message || err}`)
+        );
+      }
+
+      document.getElementById('leaveForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const payload = Object.fromEntries(new FormData(e.target).entries());
+
+        runServer(
+          'submitLeaveRequest',
+          [payload],
+          (res) => {
+            showToast(`${res.message} (${res.requestId})`);
+            e.target.reset();
+            loadDashboard();
+          },
+          (err) => showToast(`ส่งคำขอไม่สำเร็จ: ${err.message || err}`)
+        );
+      });
+
+      function approve(requestId) {
+        runServer(
+          'updateLeaveStatus',
+          [requestId, 'อนุมัติ', 'อนุมัติผ่านระบบ'],
+          (res) => {
+            showToast(res.message);
+            loadDashboard();
+          },
+          (err) => showToast(`อนุมัติไม่สำเร็จ: ${err.message || err}`)
+        );
+      }
+
+      function reject(requestId) {
+        const note = prompt('กรุณาระบุเหตุผลที่ไม่อนุมัติ', 'ข้อมูลไม่ครบถ้วน');
+        if (note === null) return;
+
+        runServer(
+          'updateLeaveStatus',
+          [requestId, 'ไม่อนุมัติ', note],
+          (res) => {
+            showToast(res.message);
+            loadDashboard();
+          },
+          (err) => showToast(`ปฏิเสธไม่สำเร็จ: ${err.message || err}`)
+        );
+      }
+
+      function seedData() {
+        runServer(
+          'seedSampleData',
+          [],
+          (res) => {
+            showToast(res);
+            loadDashboard();
+          },
+          (err) => showToast(`เติมข้อมูลตัวอย่างไม่สำเร็จ: ${err.message || err}`)
+        );
+      }
+
+      loadDashboard();
+    </script>
+  </body>
+</html>
