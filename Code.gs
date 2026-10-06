@@ -29,7 +29,7 @@ const SUPER_ADMIN_ID = 'admin'; // รหัสอ้างอิงผู้ด
 const SPREADSHEET_ID = '';
 const SPREADSHEET_TITLE = 'ระบบการลาออนไลน์ - ข้อมูลใบลา';
 
-const ORG_NAME    = 'FactoryStudio';
+const ORG_NAME    = 'ระบบลา';
 const ORG_TAGLINE = 'People · Process · Better Tomorrow';
 
 const LEAVE_TYPES = ['ลาพักร้อน', 'ลาป่วย', 'ลากิจ', 'ลาคลอด', 'ลาอื่นๆ'];
