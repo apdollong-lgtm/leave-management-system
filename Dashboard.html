@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Caveat:wght@600&family=Mali:ital,wght@1,500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#1A2340; --muted:#66708A; --faint:#98A1B5;
+    --brand:#2563EB; --brand-dark:#1D4FC4; --brand-soft:#E8F0FE;
+    --paper:#F3F7FD; --surface:#FFFFFF; --line:#E3E9F3; --line-soft:#EEF2F8;
+    --ok:#16A34A; --ok-soft:#DCF5E5; --bad:#DC2626; --bad-soft:#FDE4E4; --wait:#B7791F; --wait-soft:#FDF0D2;
+    --vacation:#3B82F6; --sick:#22A55B; --personal:#F59E0B; --maternity:#EC7FA9; --other:#6B7280;
+    --violet:#7C5CE0;
+    --radius:16px; --shadow:0 6px 24px -14px rgba(30,64,140,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:'Prompt',system-ui,-apple-system,'Segoe UI',sans-serif;font-size:14.5px;line-height:1.5}
+  button,input,select{font:inherit;color:inherit}
+  a{color:var(--brand)}
+  svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  :focus-visible{outline:3px solid rgba(37,99,235,.35);outline-offset:2px}
+
+  /* ===== โครงหน้า ===== */
+  .shell{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
+  .side{background:var(--surface);border-right:1px solid var(--line);padding:22px 14px;position:sticky;top:0;height:100vh;
+    overflow:auto;display:flex;flex-direction:column}
+  .logo{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:22px}
+  .logo b{font-size:20px;font-weight:700;letter-spacing:-.01em;margin-top:2px}
+  .logo small{font-size:10.5px;color:var(--muted)}
+  .nav{display:flex;flex-direction:column;gap:4px}
+  .nav a,.nav button{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;border:0;background:none;
+    text-decoration:none;color:var(--ink);font-weight:500;cursor:pointer;text-align:left;width:100%}
+  .nav a:hover,.nav button:hover{background:var(--brand-soft)}
+  .nav .on{background:var(--brand);color:#fff;box-shadow:0 6px 14px -8px var(--brand)}
+  .nav .on:hover{background:var(--brand-dark)}
+  .nav-label{display:flex;align-items:center;gap:12px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--muted)}
+  .nav hr{border:0;border-top:1px solid var(--line);margin:12px 10px}
+  .side .slogan{margin-top:auto;padding:20px 8px 0;font-family:'Caveat',cursive;font-size:26px;line-height:1.05;color:#24324F;transform:rotate(-6deg)}
+  .side .slogan svg{display:block;width:120px;height:14px;margin-top:4px}
+
+  .main{min-width:0;display:flex;flex-direction:column}
+  .topbar{display:flex;align-items:center;gap:16px;padding:12px 28px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+  .iconbtn{border:0;background:none;padding:8px;border-radius:10px;cursor:pointer;color:var(--ink);position:relative;display:inline-flex}
+  .iconbtn:hover{background:var(--brand-soft)}
+  .search{flex:1;min-width:0;max-width:420px;display:flex;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:8px 16px;color:var(--muted)}
+  .search input{border:0;background:none;outline:none;flex:1;min-width:0;color:var(--ink)}
+  .badge{position:absolute;top:2px;right:0;background:var(--bad);color:#fff;font-size:11px;font-weight:600;min-width:18px;height:18px;
+    border-radius:9px;display:grid;place-items:center;padding:0 5px}
+  .user{display:flex;align-items:center;gap:10px;margin-left:auto;border:0;background:none;cursor:pointer;padding:4px 8px;border-radius:12px;text-align:left}
+  .user:hover{background:var(--brand-soft)}
+  .avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#3B82F6,#1D4FC4);color:#fff;display:grid;place-items:center;font-weight:600}
+  .user b{display:block;font-weight:600;line-height:1.2}
+  .user small{color:var(--muted);font-size:12px}
+  .content{padding:22px 28px 0;flex:1;display:flex;flex-direction:column;gap:18px}
+
+  /* ===== Hero ===== */
+  .hero{position:relative;overflow:hidden;border-radius:var(--radius);padding:30px 34px;min-height:200px;
+    background:linear-gradient(110deg,#EAF2FF 0%,#F6F9FF 52%,#DCE9FF 100%);display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center}
+  .hero::after{content:"";position:absolute;right:-60px;bottom:-90px;width:340px;height:240px;border-radius:50%;background:rgba(37,99,235,.08)}
+  .hero h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.01em;color:#16224A}
+  .hero p{margin:4px 0 0;font-size:18px;font-weight:500;color:#24324F}
+  .hero q{display:block;margin-top:16px;font-size:18px;font-weight:600;color:var(--brand)}
+  .hero .art{position:relative;z-index:1;display:flex;align-items:center;gap:22px}
+  .script{font-family:'Caveat',cursive;font-size:26px;line-height:1;color:#24324F;transform:rotate(-8deg);text-align:center}
+  .bubble{position:absolute;top:-6px;right:-8px;background:#fff;border-radius:18px;padding:8px 12px;font-size:13px;font-weight:600;line-height:1.3;
+    box-shadow:var(--shadow);text-align:center}
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;color:var(--muted);font-size:13px}
+  .toolbar .filters{display:flex;flex-wrap:wrap;gap:8px}
+  select.sel{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 30px 7px 12px;cursor:pointer;
+    appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231A2340' stroke-width='2.4'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 10px center;background-size:14px;font-size:13.5px}
+
+  /* ===== การ์ด ===== */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);min-width:0}
+  .card-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+  .card-h h2{margin:0;font-size:17px;font-weight:600}
+  .pill-btn{border:1px solid #BFD3FA;background:var(--brand-soft);color:var(--brand);border-radius:10px;padding:6px 14px;font-weight:500;font-size:13px;cursor:pointer}
+  .pill-btn:hover{background:#D9E6FD}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .kpi{display:flex;gap:14px;align-items:flex-start}
+  .kpi .ic{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;flex:none}
+  .kpi .ic svg{width:28px;height:28px}
+  .kpi .l{font-weight:600;font-size:14px}
+  .kpi .v{font-size:34px;font-weight:700;line-height:1.1;margin:2px 0}
+  .kpi .u{color:var(--muted);font-size:13px}
+  .kpi .d{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .kpi .d b{font-weight:600}
+  .kpi.bad{border-color:#F6CACA}
+
+  .row2{display:grid;grid-template-columns:1fr 1.25fr;gap:18px}
+  .row2b{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+
+  .donut-wrap{display:grid;grid-template-columns:200px 1fr;gap:20px;align-items:center}
+  .donut{position:relative;height:200px}
+  .donut .c{position:absolute;inset:0;display:grid;place-items:center;text-align:center;pointer-events:none}
+  .donut .c b{font-size:30px;font-weight:700;line-height:1}
+  .donut .c small{display:block;color:var(--muted)}
+  .legend{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+  .legend li{display:flex;align-items:center;gap:10px}
+  .legend .dot{width:12px;height:12px;border-radius:50%;flex:none}
+  .legend span{flex:1}
+  .legend b{font-weight:600}
+  .chart{position:relative;height:240px}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+  th{font-weight:600;background:#F6F8FC;color:#3A4560;white-space:nowrap}
+  tbody tr:hover{background:#FAFCFF}
+  .tbl{overflow:auto;border:1px solid var(--line);border-radius:12px}
+  .tbl.max{max-height:620px}
+  .num{text-align:center}
+  .muted{color:var(--muted)}
+  .empty{color:var(--muted);text-align:center;padding:28px}
+  .pill{display:inline-block;padding:3px 12px;border-radius:8px;font-weight:600;font-size:12.5px;white-space:nowrap}
+  .p-wait{background:var(--wait-soft);color:var(--wait)}
+  .p-ok{background:var(--ok-soft);color:var(--ok)}
+  .p-bad{background:var(--bad-soft);color:var(--bad)}
+  .tdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+  .act{display:flex;gap:6px}
+  .act button{white-space:nowrap;font-size:12.5px;font-weight:600;border-radius:8px;padding:5px 10px;cursor:pointer;background:#fff}
+  .act .yes{border:1.5px solid var(--ok);color:var(--ok)}
+  .act .yes:hover{background:var(--ok-soft)}
+  .act .no{border:1.5px solid var(--bad);color:var(--bad)}
+  .act .no:hover{background:var(--bad-soft)}
+
+  .bal{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
+  .ring{position:relative;width:170px;height:170px}
+  .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .ring .c{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+  .ring .c b{font-size:34px;font-weight:700;line-height:1}
+  .bal .legend{border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+
+  /* ขั้นตอนการใช้งาน */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;position:relative}
+  .step{background:#F7FAFF;border:1px solid var(--line);border-radius:14px;padding:14px;position:relative}
+  .step + .step::before{content:"→";position:absolute;left:-24px;top:50%;transform:translateY(-50%);color:var(--brand);font-weight:700;font-size:22px}
+  .step h3{display:flex;gap:10px;align-items:flex-start;margin:0 0 10px;font-size:14.5px;font-weight:600;line-height:1.35}
+  .step h3 small{display:block;font-weight:500;color:var(--muted)}
+  .step .n{width:30px;height:30px;border-radius:50%;color:#fff;display:grid;place-items:center;font-weight:700;flex:none}
+  .step .pic{height:110px;border-radius:12px;display:grid;place-items:center;background:#fff;border:1px solid var(--line-soft)}
+
+  /* ปฏิทิน */
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .cal .h{background:#F6F8FC;font-weight:600;text-align:center;padding:8px;font-size:13px}
+  .cal .d{min-height:104px;border-top:1px solid var(--line-soft);border-left:1px solid var(--line-soft);padding:6px;font-size:12px}
+  .cal .d:nth-child(7n+1){border-left:0}
+  .cal .d.out{background:#FAFBFD;color:var(--faint)}
+  .cal .d.today .dn{background:var(--brand);color:#fff}
+  .cal .dn{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;font-weight:600;margin-bottom:3px}
+  .cal .ev{display:block;border-radius:6px;padding:1px 6px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    background:color-mix(in srgb,var(--c) 16%,#fff);border-left:3px solid var(--c)}
+  .cal .ev.pending{border-left-style:dashed;opacity:.8}
+  .cal .more{color:var(--muted)}
+
+  .tabs{display:flex;flex-wrap:wrap;gap:6px}
+  .tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 14px;cursor:pointer;font-size:13px}
+  .tabs .on{background:var(--brand);border-color:var(--brand);color:#fff}
+
+  .links{display:flex;flex-wrap:wrap;gap:10px}
+  .links a{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 14px;text-decoration:none;color:var(--ink);background:#fff;font-weight:500}
+  .links a:hover{border-color:#BFD3FA;background:var(--brand-soft)}
+  [hidden]{display:none!important}
+
+  /* หน้าเข้าสู่ระบบ */
+  #gate{width:100%;max-width:380px;margin:30px auto;text-align:center}
+  #gate h2{margin:6px 0 2px}
+  #gate p{color:var(--muted);margin:0 0 16px}
+  #gate input{width:100%;font-size:17px;text-align:center;padding:11px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:10px}
+  #gate input#pin{letter-spacing:.3em}
+  #gate input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(37,99,235,.18)}
+  #gate button{width:100%;margin-top:4px;font-weight:600;color:#fff;background:var(--brand);border:0;border-radius:10px;padding:12px;cursor:pointer}
+  #gate button:hover{background:var(--brand-dark)}
+  #gate button:disabled{opacity:.6;cursor:progress}
+  .err{color:var(--bad);margin-top:10px;min-height:1.5em}
+
+  /* เมนูผู้ใช้ */
+  .usermenu{position:relative;margin-left:auto}
+  .usermenu .user{margin-left:0}
+  .dropdown{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);
+    min-width:180px;padding:6px;z-index:50}
+  .dropdown button{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 12px;border-radius:8px;cursor:pointer}
+  .dropdown button:hover{background:var(--brand-soft)}
+
+  /* ฟอร์มยื่นใบลา / ฟอร์มผู้ใช้ */
+  .hello{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;
+    background:linear-gradient(110deg,#EAF2FF 0%,#F6F9FF 52%,#DCE9FF 100%)}
+  .hello h1{margin:0;font-size:24px;font-weight:700;color:#16224A}
+  .hello p{margin:2px 0 0}
+  .hello q{font-weight:600;color:var(--brand)}
+  .field{margin-bottom:14px;min-width:0}
+  .field label,.legend-t,.field .legend{display:block;font-weight:600;margin-bottom:6px;font-size:14px}
+  .field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+  .field textarea{min-height:84px;resize:vertical;font:inherit}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(37,99,235,.18)}
+  .frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .types{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;border:0;padding:0;margin:0}
+  .type{position:relative}
+  .type input{position:absolute;inset:0;opacity:0;pointer-events:none}
+  .type span{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;font-weight:500;background:#fff}
+  .type span::before{content:"";width:12px;height:12px;border-radius:50%;background:var(--c);flex:none}
+  .type input:checked + span{border-color:var(--c);background:color-mix(in srgb,var(--c) 12%,#fff);box-shadow:inset 4px 0 0 var(--c)}
+  .type input:focus-visible + span{outline:3px solid rgba(37,99,235,.35);outline-offset:2px}
+  .tally{display:flex;align-items:baseline;gap:8px;padding:10px 14px;background:var(--paper);border:1px solid var(--line);border-radius:10px;margin-bottom:14px}
+  .tally b{font-size:24px;color:var(--brand)}
+  .tally small{color:var(--muted)}
+  .check{display:flex;gap:8px;align-items:center;font-weight:500;margin:-4px 0 12px}
+  .check input{width:18px;height:18px;accent-color:var(--brand)}
+  button.primary{font-weight:600;font-size:15px;color:#fff;background:var(--brand);border:0;border-radius:10px;padding:12px 22px;cursor:pointer;
+    box-shadow:0 8px 18px -10px var(--brand)}
+  #leaveForm button.primary{width:100%}
+  button.primary:hover{background:var(--brand-dark)}
+  button.primary:disabled{opacity:.6;cursor:progress}
+  .msg{margin-top:12px;padding:10px 14px;border-radius:10px;display:none}
+  .msg.err{display:block;background:var(--bad-soft);color:var(--bad)}
+  .msg.ok{display:block;background:var(--ok-soft);color:var(--ok)}
+  .done{text-align:center;padding:10px 0}
+  .done .ok{width:56px;height:56px}
+  .done h2{margin:6px 0 0}
+  .done .id{font-size:22px;font-weight:700;color:var(--brand);margin:4px 0}
+  .done p{margin:4px 0;color:var(--muted)}
+  .done-act{display:flex;gap:8px;justify-content:center;margin-top:14px}
+  .uform{display:grid;grid-template-columns:repeat(3,1fr);gap:0 14px;align-items:end}
+  .uform .check{margin:0 0 22px}
+  .uform-act{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+  .uform .msg{grid-column:1 / -1;margin-top:0}
+  .role{display:inline-block;padding:2px 10px;border-radius:8px;font-size:12.5px;font-weight:600}
+  .role-employee{background:#EEF2F8;color:#3A4560}
+  .role-approver{background:var(--brand-soft);color:var(--brand)}
+  .role-admin{background:#EFE9FD;color:var(--violet)}
+  .linkbtn{border:0;background:none;color:var(--brand);cursor:pointer;font-weight:500;padding:4px 6px}
+
+  .view{display:none;flex-direction:column;gap:18px}
+  .view.on{display:flex}
+  .loading .view{opacity:.55;transition:opacity .2s}
+
+  .foot{position:relative;margin:auto -28px 0;padding-top:24px;height:174px;overflow:hidden}
+  .foot svg.wave{position:absolute;inset:auto 0 0 0;width:100%;height:150px}
+  .foot .l,.foot .r{position:absolute;bottom:30px;font-size:22px;line-height:1.15;color:#24324F}
+  .foot .l{left:36px;font-family:'Caveat',cursive;font-size:28px;transform:rotate(-6deg)}
+  .foot .r{right:36px;font-family:'Mali',cursive;font-style:italic;text-align:right;transform:rotate(-5deg)}
+
+  .scrim{display:none}
+  @media (max-width:1180px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .row2,.row2b{grid-template-columns:1fr}
+    .steps{grid-template-columns:repeat(2,1fr)}
+    .step:nth-child(3)::before{display:none}
+    .uform{grid-template-columns:1fr 1fr}
+  }
+  @media (max-width:900px){
+    .shell{grid-template-columns:1fr}
+    .side{position:fixed;left:0;top:0;bottom:0;width:250px;z-index:40;transform:translateX(-100%);transition:transform .2s}
+    body.menu .side{transform:none}
+    body.menu .scrim{display:block;position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:30}
+    .topbar{padding:10px 16px;gap:8px}
+    .user{margin-left:0;padding:4px}
+    .content{padding:16px 16px 0}
+    .foot{margin:auto -16px 0}
+    .hero{grid-template-columns:1fr;padding:22px}
+    .hero .art{display:none}
+    .hero h1{font-size:26px}
+    .user .who{display:none}
+  }
+  @media (min-width:901px){ #menuBtn{display:none} }
+  @media (max-width:560px){
+    .kpis{grid-template-columns:1fr 1fr;gap:10px}
+    .kpi{flex-direction:column;gap:8px}
+    .kpi .v{font-size:28px}
+    .donut-wrap,.bal{grid-template-columns:1fr;justify-items:center}
+    .legend{width:100%}
+    .steps{grid-template-columns:1fr}
+    .step::before{display:none}
+    .foot .l,.foot .r{font-size:18px}
+    .cal .d{min-height:70px;padding:3px}
+    .cal .ev{font-size:10.5px;padding:0 3px}
+    .frow,.uform{grid-template-columns:1fr}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side" id="side">
+    <div class="logo">
+      <svg width="96" height="62" viewBox="0 0 96 62" aria-hidden="true">
+        <path d="M8 58V34l14-9v9l14-9v9l14-9v33z" fill="#2563EB"/>
+        <rect x="52" y="14" width="8" height="44" fill="#1D4FC4"/>
+        <rect x="64" y="22" width="8" height="36" fill="#1D4FC4"/>
+        <rect x="14" y="44" width="6" height="6" rx="1" fill="#fff"/><rect x="26" y="44" width="6" height="6" rx="1" fill="#fff"/><rect x="38" y="44" width="6" height="6" rx="1" fill="#fff"/>
+        <path d="M74 30c0-14 8-24 20-26-1 14-8 24-20 26z" fill="#22A55B"/>
+        <path d="M74 30c-2-10-8-16-16-17 1 10 7 16 16 17z" fill="#4ADE80"/>
+        <path d="M74 30v28" stroke="#16A34A" stroke-width="2.5"/>
+      </svg>
+      <b><?= orgName ?></b>
+      <small><?= orgTagline ?></small>
+    </div>
+    <nav class="nav" id="nav">
+      <button data-view="home" data-roles="approver admin"><svg class="i" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>หน้าแรก</button>
+      <button data-view="leave" data-roles="employee approver admin" class="self-only"><svg class="i" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>ยื่นใบลา</button>
+      <button data-view="my" data-roles="employee approver admin" class="self-only"><svg class="i" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M9 15l2 2 4-4"/></svg>ใบลาของฉัน</button>
+      <button data-view="approve" data-roles="approver admin"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>อนุมัติใบลา</button>
+      <button data-view="calendar" data-roles="approver admin"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>ปฏิทินวันลา</button>
+      <button data-view="employees" data-roles="approver admin"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 12 0v1"/><path d="M16 4.5a4 4 0 0 1 0 7"/><path d="M22 21v-1a6 6 0 0 0-4-5.6"/></svg>ข้อมูลพนักงาน</button>
+      <button data-view="report" data-roles="approver admin"><svg class="i" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h6"/></svg>รายงาน</button>
+      <button data-view="settings" data-roles="admin"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>ตั้งค่าและสิทธิ์</button>
+      <hr data-roles="admin">
+      <div class="nav-label" data-roles="admin"><svg class="i" viewBox="0 0 24 24"><path d="M17.5 19H7a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 11a4 4 0 0 1-1.5 8z" fill="#3B82F6" stroke="#3B82F6"/><path d="M12 16v-5m-2 2 2-2 2 2" stroke="#fff"/></svg>เชื่อมต่อข้อมูล</div>
+      <a id="lnkSheet" data-roles="admin" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" style="stroke:none"><path d="M5 2h10l5 5v15H5z" fill="#1E9E5A"/><path d="M15 2v5h5" fill="#8BD3A8"/><path d="M8 11h9v8H8zM8 15h9M12.5 11v8" stroke="#fff" stroke-width="1.5" fill="none"/></svg>Google Sheets</a>
+    </nav>
+    <div class="slogan">Good People<br>Better Tomorrow
+      <svg viewBox="0 0 120 14"><path d="M2 10c30-8 80-10 116-4" stroke="#22A55B" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="iconbtn" id="menuBtn" aria-label="เมนู"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <label class="search" data-roles="approver admin">
+        <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="q" type="search" placeholder="ค้นหาพนักงาน เช่น ชื่อ, รหัส, แผนก..." aria-label="ค้นหาพนักงาน">
+      </label>
+      <button class="iconbtn" id="bell" data-roles="approver admin" aria-label="ใบลารออนุมัติ">
+        <svg class="i" viewBox="0 0 24 24" style="width:24px;height:24px;color:var(--brand)"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" fill="currentColor"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>
+        <span class="badge" id="bellN" hidden>0</span>
+      </button>
+      <div class="usermenu" id="userMenu" hidden>
+        <button class="user" id="userBtn" aria-haspopup="true" aria-expanded="false">
+          <span class="avatar" id="avatar">?</span>
+          <span class="who"><b id="userName">-</b><small id="userRole">-</small></span>
+          <svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="dropdown" id="userDrop" hidden>
+          <button id="btnPin" class="self-only">เปลี่ยน PIN</button>
+          <button id="btnLogout">ออกจากระบบ</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="content" id="content">
+      <form id="gate" class="card" hidden>
+        <svg class="i" viewBox="0 0 24 24" style="width:40px;height:40px;color:var(--brand)"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        <h2>เข้าสู่ระบบการลา</h2>
+        <p>ใช้รหัสพนักงานและ PIN ที่ได้รับจากผู้ดูแลระบบ</p>
+        <input type="text" id="loginId" autocomplete="username" placeholder="รหัสพนักงาน" aria-label="รหัสพนักงาน" required>
+        <input type="password" id="pin" inputmode="numeric" autocomplete="current-password" placeholder="PIN" aria-label="PIN" required>
+        <button type="submit" id="loginBtn">เข้าสู่ระบบ</button>
+        <div class="err" id="gateErr" role="alert"></div>
+      </form>
+
+      <!-- ===== หน้าแรก ===== -->
+      <section class="view" id="v-home">
+        <div class="hero">
+          <div style="position:relative;z-index:1">
+            <h1>ระบบการลาออนไลน์</h1>
+            <p>ลาได้ง่าย อนุมัติได้เร็ว เห็นข้อมูลแบบเรียลไทม์</p>
+            <q>ดูแลคน ทำให้งานเดินหน้า</q>
+          </div>
+          <div class="art" aria-hidden="true">
+            <div class="script">Happy People<br>Productive Workplace
+              <svg viewBox="0 0 160 12" width="120" height="12"><path d="M4 9c40-7 100-8 152-3" stroke="#22A55B" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+            </div>
+            <div style="position:relative">
+              <svg width="190" height="170" viewBox="0 0 190 170">
+                <path d="M150 160c0-40 10-70 34-86-4 40-14 70-34 86z" fill="#4ADE80"/>
+                <path d="M150 160c-8-30-24-50-46-56 6 30 22 50 46 56z" fill="#22A55B"/>
+                <rect x="40" y="18" width="84" height="146" rx="16" fill="#1A2340"/>
+                <rect x="46" y="28" width="72" height="126" rx="10" fill="#fff"/>
+                <rect x="54" y="38" width="56" height="10" rx="5" fill="#BFD3FA"/>
+                <rect x="54" y="56" width="56" height="26" rx="6" fill="#E8F0FE"/>
+                <circle cx="66" cy="69" r="7" fill="#22A55B"/><path d="m62.5 69 2.5 2.5 4.5-5" stroke="#fff" stroke-width="2" fill="none"/>
+                <rect x="78" y="64" width="26" height="5" rx="2.5" fill="#93B4F5"/><rect x="78" y="72" width="18" height="5" rx="2.5" fill="#C9D9FB"/>
+                <rect x="54" y="88" width="56" height="8" rx="4" fill="#EEF2F8"/><rect x="54" y="101" width="56" height="8" rx="4" fill="#EEF2F8"/>
+                <rect x="54" y="114" width="56" height="8" rx="4" fill="#EEF2F8"/>
+                <rect x="60" y="132" width="44" height="12" rx="6" fill="#2563EB"/>
+                <rect x="4" y="74" width="46" height="44" rx="10" fill="#fff" stroke="#E3E9F3"/>
+                <rect x="4" y="74" width="46" height="12" rx="6" fill="#F59E0B"/>
+                <text x="27" y="110" text-anchor="middle" font-size="20" font-weight="700" fill="#1A2340" font-family="Prompt">5</text>
+              </svg>
+              <div class="bubble">ลาง่าย<br>ผ่านมือถือ<br>ได้ทุกที่ <span style="color:#EC4899">♥</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <span id="scope">–</span>
+          <div class="filters">
+            <select class="sel ySel" aria-label="ปี"></select>
+            <select class="sel" id="fMonth" aria-label="เดือน"></select>
+            <select class="sel" id="fDept" aria-label="แผนก"></select>
+          </div>
+        </div>
+
+        <section class="kpis" aria-label="ตัวเลขสรุป">
+          <div class="card kpi">
+            <div class="ic" style="background:#E8F0FE;color:var(--brand)"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h2M14 14h2M8 17h2M14 17h2"/></svg></div>
+            <div><div class="l">จำนวนพนักงาน</div><div class="v" id="kEmp">0</div><div class="u">คน</div></div>
+          </div>
+          <div class="card kpi">
+            <div class="ic" style="background:#E8F0FE;color:var(--brand)"><svg class="i" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" fill="#5B8DEF" stroke="#5B8DEF"/><path d="M14 3v6h6M8 13h8M8 17h6" stroke="#fff"/></svg></div>
+            <div><div class="l">รออนุมัติ</div><div class="v" id="kPend">0</div><div class="u">รายการ</div></div>
+          </div>
+          <div class="card kpi">
+            <div class="ic" style="background:var(--ok-soft)"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#22A55B" stroke="none"/><path d="m7.5 12 3 3 6-6.5" stroke="#fff" stroke-width="2.4"/></svg></div>
+            <div><div class="l">อนุมัติแล้ว</div><div class="v" id="kOk">0</div><div class="u">รายการ</div><div class="d" id="kOkD"></div></div>
+          </div>
+          <div class="card kpi bad">
+            <div class="ic" style="background:var(--bad-soft)"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#E53E3E" stroke="none"/><path d="m8.5 8.5 7 7M15.5 8.5l-7 7" stroke="#fff" stroke-width="2.4"/></svg></div>
+            <div><div class="l">ไม่อนุมัติ</div><div class="v" id="kBad">0</div><div class="u">รายการ</div><div class="d" id="kBadD"></div></div>
+          </div>
+        </section>
+
+        <div class="row2">
+          <section class="card">
+            <div class="card-h"><h2 id="typeTitle">สัดส่วนประเภทการลา</h2></div>
+            <div class="donut-wrap">
+              <div class="donut"><canvas id="cType"></canvas><div class="c"><div><b id="typeTotal">0</b><small>รายการ</small></div></div></div>
+              <ul class="legend" id="typeLegend"></ul>
+            </div>
+          </section>
+          <section class="card">
+            <div class="card-h"><h2>แนวโน้มการลา รายเดือน</h2><select class="sel ySel" aria-label="ปี"></select></div>
+            <div class="chart"><canvas id="cMonth"></canvas></div>
+          </section>
+        </div>
+
+        <div class="row2b">
+          <section class="card">
+            <div class="card-h"><h2>พนักงานลามากที่สุด (Top 5)</h2><select class="sel ySel" aria-label="ปี"></select></div>
+            <div class="tbl"><table>
+              <thead><tr><th class="num">#</th><th>ชื่อ-สกุล</th><th>แผนก</th><th class="num">จำนวนวันลา</th></tr></thead>
+              <tbody id="topBody"></tbody>
+            </table></div>
+          </section>
+          <section class="card">
+            <div class="card-h"><h2>วันลาคงเหลือ</h2><select class="sel" id="balEmp" aria-label="เลือกพนักงาน" style="max-width:200px"></select></div>
+            <div class="bal">
+              <div class="ring">
+                <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#E6F4EC" stroke-width="16"/>
+                  <circle id="ringArc" cx="60" cy="60" r="50" fill="none" stroke="#3E9E6B" stroke-width="16" stroke-dasharray="0 999"/></svg>
+                <div class="c"><div><b id="balTotal">0</b><div>วัน</div></div></div>
+              </div>
+              <ul class="legend" id="balLegend"></ul>
+            </div>
+          </section>
+        </div>
+
+        <section class="card">
+          <div class="card-h"><h2>รายการใบลาล่าสุด</h2><button class="pill-btn" data-go="approve">ดูทั้งหมด</button></div>
+          <div class="tbl"><table>
+            <thead><tr><th>วันที่ยื่น</th><th>ชื่อ-สกุล</th><th>ประเภทการลา</th><th>วันที่ลา</th><th class="num">จำนวนวัน</th><th class="num">สถานะ</th><th>ผู้อนุมัติ</th><th>หมายเหตุ</th></tr></thead>
+            <tbody id="recentBody"></tbody>
+          </table></div>
+        </section>
+
+        <section class="card">
+          <div class="card-h"><h2>ขั้นตอนการใช้งาน</h2></div>
+          <div class="steps">
+            <div class="step"><h3><span class="n" style="background:var(--brand)">1</span>ยื่นใบลาผ่าน Web App</h3>
+              <div class="pic"><svg width="70" height="96" viewBox="0 0 70 96"><rect x="6" y="2" width="58" height="92" rx="10" fill="#1A2340"/><rect x="11" y="10" width="48" height="76" rx="6" fill="#fff"/><rect x="18" y="20" width="34" height="6" rx="3" fill="#BFD3FA"/><rect x="18" y="32" width="34" height="6" rx="3" fill="#EEF2F8"/><rect x="18" y="43" width="34" height="6" rx="3" fill="#EEF2F8"/><rect x="18" y="54" width="34" height="6" rx="3" fill="#EEF2F8"/><rect x="18" y="68" width="34" height="9" rx="4.5" fill="#2563EB"/></svg></div></div>
+            <div class="step"><h3><span class="n" style="background:var(--sick)">2</span><span>ข้อมูลเข้าสู่ระบบอัตโนมัติ<small>(Google Sheets)</small></span></h3>
+              <div class="pic"><svg width="64" height="80" viewBox="0 0 24 30"><path d="M3 1h13l6 6v22H3z" fill="#1E9E5A"/><path d="M16 1v6h6" fill="#8BD3A8"/><path d="M7 13h11v10H7zM7 18h11M12.5 13v10" stroke="#fff" stroke-width="1.6" fill="none"/></svg></div></div>
+            <div class="step"><h3><span class="n" style="background:var(--personal)">3</span>หัวหน้าอนุมัติผ่านระบบ</h3>
+              <div class="pic"><svg width="130" height="90" viewBox="0 0 130 90"><rect x="14" y="4" width="102" height="70" rx="6" fill="#1A2340"/><rect x="19" y="9" width="92" height="60" rx="3" fill="#fff"/><path d="M4 76h122l-6 8H10z" fill="#98A1B5"/><circle cx="34" cy="24" r="6" fill="#22A55B"/><rect x="45" y="21" width="50" height="6" rx="3" fill="#EEF2F8"/><circle cx="34" cy="40" r="6" fill="#E53E3E"/><rect x="45" y="37" width="50" height="6" rx="3" fill="#EEF2F8"/><circle cx="34" cy="56" r="6" fill="#CBD2DE"/><rect x="45" y="53" width="50" height="6" rx="3" fill="#EEF2F8"/></svg></div></div>
+            <div class="step"><h3><span class="n" style="background:var(--violet)">4</span><span>สรุปผลบน Dashboard<small>(ข้อมูลจาก Google Sheets)</small></span></h3>
+              <div class="pic"><svg width="130" height="90" viewBox="0 0 130 90"><rect x="10" y="4" width="110" height="66" rx="6" fill="#1A2340"/><rect x="15" y="9" width="100" height="56" rx="3" fill="#fff"/><rect x="58" y="70" width="14" height="10" fill="#98A1B5"/><rect x="44" y="80" width="42" height="4" rx="2" fill="#98A1B5"/><rect x="24" y="38" width="6" height="20" fill="#3B82F6"/><rect x="33" y="28" width="6" height="30" fill="#3B82F6"/><rect x="42" y="34" width="6" height="24" fill="#93B4F5"/><rect x="51" y="22" width="6" height="36" fill="#3B82F6"/><circle cx="90" cy="34" r="16" fill="#22A55B"/><path d="M90 34V18a16 16 0 0 1 15 21z" fill="#F59E0B"/><path d="M90 34l15 5a16 16 0 0 1-8 9z" fill="#E53E3E"/></svg></div></div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ===== ยื่นใบลา ===== -->
+      <section class="view" id="v-leave">
+        <div class="hello card">
+          <div><h1>สวัสดี <span id="helloName"></span></h1><p id="helloSub" class="muted"></p></div>
+          <q>ดูแลคน ทำให้งานเดินหน้า</q>
+        </div>
+        <div class="row2b">
+          <section class="card">
+            <div class="card-h"><h2>ยื่นใบลา</h2></div>
+            <form id="leaveForm" novalidate>
+              <div class="field">
+                <span class="legend" id="typeLabel">ประเภทการลา</span>
+                <fieldset class="types" id="types" aria-labelledby="typeLabel"></fieldset>
+              </div>
+              <div class="frow">
+                <div class="field"><label for="start">วันที่เริ่ม</label><input type="date" id="start" required></div>
+                <div class="field"><label for="end">วันที่สิ้นสุด</label><input type="date" id="end" required></div>
+              </div>
+              <label class="check" id="halfWrap" hidden><input type="checkbox" id="halfDay"> ลาครึ่งวัน</label>
+              <div class="tally" aria-live="polite"><b id="dayCount">0</b> วันทำการ <small id="dayHint">ไม่นับเสาร์-อาทิตย์</small></div>
+              <div class="field">
+                <label for="reason">เหตุผลการลา</label>
+                <textarea id="reason" maxlength="500" required placeholder="เช่น ไปพบแพทย์ตามนัด"></textarea>
+              </div>
+              <button type="submit" class="primary" id="submitBtn">ส่งใบลา</button>
+              <div class="msg" id="msg" role="alert"></div>
+            </form>
+            <div class="done" id="done" hidden aria-live="polite">
+              <svg class="ok" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#22A55B"/><path d="m7 12 3.2 3.2L17 8.5" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <h2>ส่งใบลาแล้ว</h2>
+              <div class="id" id="doneId"></div>
+              <p id="doneDays"></p>
+              <p>สถานะ: รออนุมัติ ติดตามผลได้ที่เมนู "ใบลาของฉัน"</p>
+              <div class="done-act"><button type="button" class="pill-btn" id="againBtn">ยื่นใบลาใหม่</button><button type="button" class="pill-btn" data-go="my">ดูใบลาของฉัน</button></div>
+            </div>
+          </section>
+          <section class="card">
+            <div class="card-h"><h2>วันลาคงเหลือของฉัน</h2><span class="muted" id="myBalYear"></span></div>
+            <div class="bal">
+              <div class="ring">
+                <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#E6F4EC" stroke-width="16"/>
+                  <circle id="myRingArc" cx="60" cy="60" r="50" fill="none" stroke="#3E9E6B" stroke-width="16" stroke-dasharray="0 999"/></svg>
+                <div class="c"><div><b id="myBalTotal">0</b><div>วัน</div></div></div>
+              </div>
+              <ul class="legend" id="myBalLegend"></ul>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ===== ใบลาของฉัน ===== -->
+      <section class="view" id="v-my">
+        <section class="kpis" aria-label="สรุปใบลาของฉัน">
+          <div class="card kpi"><div class="ic" style="background:#E8F0FE;color:var(--brand)"><svg class="i" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg></div>
+            <div><div class="l">ใบลาทั้งหมด</div><div class="v" id="mAll">0</div><div class="u">รายการ</div></div></div>
+          <div class="card kpi"><div class="ic" style="background:var(--wait-soft);color:var(--wait)"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+            <div><div class="l">รออนุมัติ</div><div class="v" id="mPend">0</div><div class="u">รายการ</div></div></div>
+          <div class="card kpi"><div class="ic" style="background:var(--ok-soft)"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#22A55B" stroke="none"/><path d="m7.5 12 3 3 6-6.5" stroke="#fff" stroke-width="2.4"/></svg></div>
+            <div><div class="l">ลาไปแล้ว (อนุมัติ)</div><div class="v" id="mOk">0</div><div class="u">วัน</div></div></div>
+          <div class="card kpi"><div class="ic" style="background:var(--bad-soft)"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#E53E3E" stroke="none"/><path d="m8.5 8.5 7 7M15.5 8.5l-7 7" stroke="#fff" stroke-width="2.4"/></svg></div>
+            <div><div class="l">ไม่อนุมัติ</div><div class="v" id="mBad">0</div><div class="u">รายการ</div></div></div>
+        </section>
+        <section class="card">
+          <div class="card-h"><h2>ประวัติใบลาของฉัน</h2><select class="sel" id="myYear" aria-label="ปี"></select></div>
+          <div class="tbl max"><table>
+            <thead><tr><th>วันที่ยื่น</th><th>ประเภทการลา</th><th>วันที่ลา</th><th class="num">จำนวนวัน</th><th class="num">สถานะ</th><th>ผู้อนุมัติ</th><th>หมายเหตุ</th></tr></thead>
+            <tbody id="myBody"></tbody>
+          </table></div>
+        </section>
+      </section>
+
+      <!-- ===== อนุมัติใบลา ===== -->
+      <section class="view" id="v-approve">
+        <section class="card">
+          <div class="card-h" style="flex-wrap:wrap"><h2>อนุมัติใบลา</h2>
+            <div class="tabs" id="stTabs">
+              <button data-st="" class="on">ทั้งหมด</button><button data-st="รออนุมัติ">รออนุมัติ</button>
+              <button data-st="อนุมัติ">อนุมัติแล้ว</button><button data-st="ไม่อนุมัติ">ไม่อนุมัติ</button>
+            </div>
+          </div>
+          <div class="tbl max"><table>
+            <thead><tr><th>วันที่ยื่น</th><th>ชื่อ-สกุล</th><th>แผนก</th><th>ประเภท / เหตุผล</th><th>วันที่ลา</th><th class="num">วัน</th><th class="num">สถานะ</th><th>ผู้อนุมัติ / หมายเหตุ</th><th></th></tr></thead>
+            <tbody id="allBody"></tbody>
+          </table></div>
+        </section>
+      </section>
+
+      <!-- ===== ปฏิทิน ===== -->
+      <section class="view" id="v-calendar">
+        <section class="card">
+          <div class="card-h">
+            <button class="iconbtn" id="calPrev" aria-label="เดือนก่อน"><svg class="i" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+            <h2 id="calTitle" style="flex:1;text-align:center"></h2>
+            <button class="iconbtn" id="calNext" aria-label="เดือนถัดไป"><svg class="i" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
+          </div>
+          <div class="cal" id="cal"></div>
+          <p class="muted" style="margin:10px 0 0;font-size:13px">แสดงใบลาที่อนุมัติแล้วและรออนุมัติ (ขอบเส้นประ = รออนุมัติ) · ไม่แสดงเสาร์-อาทิตย์เป็นวันลา</p>
+        </section>
+      </section>
+
+      <!-- ===== ข้อมูลพนักงาน ===== -->
+      <section class="view" id="v-employees">
+        <section class="card">
+          <div class="card-h"><h2 id="empTitle">ข้อมูลพนักงาน</h2></div>
+          <div class="tbl max"><table>
+            <thead id="empHead"></thead><tbody id="empBody"></tbody>
+          </table></div>
+        </section>
+      </section>
+
+      <!-- ===== รายงาน ===== -->
+      <section class="view" id="v-report">
+        <section class="card">
+          <div class="card-h"><h2 id="repTitle">วันลาแยกตามแผนกและประเภท</h2></div>
+          <div class="tbl"><table><thead id="repHead"></thead><tbody id="repBody"></tbody></table></div>
+        </section>
+        <section class="card">
+          <div class="card-h"><h2>แหล่งข้อมูล</h2></div>
+          <div class="links" id="repLinks"></div>
+        </section>
+      </section>
+
+      <!-- ===== ตั้งค่า ===== -->
+      <section class="view" id="v-settings">
+        <section class="card">
+          <div class="card-h"><h2 id="uFormTitle">เพิ่มผู้ใช้งาน</h2></div>
+          <form id="userForm" class="uform" novalidate>
+            <div class="field"><label for="uEmp">รหัสพนักงาน</label><input id="uEmp" required maxlength="30" placeholder="เช่น E1001"></div>
+            <div class="field"><label for="uName">ชื่อ-นามสกุล</label><input id="uName" required maxlength="80"></div>
+            <div class="field"><label for="uDept">แผนก</label><select id="uDept" required></select></div>
+            <div class="field"><label for="uRole">สิทธิ์</label><select id="uRole"></select></div>
+            <div class="field"><label for="uPin">PIN (ตัวเลข 4-12 หลัก)</label><input id="uPin" inputmode="numeric" maxlength="12" autocomplete="new-password"></div>
+            <label class="check"><input type="checkbox" id="uActive" checked> เปิดใช้งาน</label>
+            <div class="uform-act">
+              <button type="submit" class="primary" id="uSave">บันทึก</button>
+              <button type="button" class="pill-btn" id="uReset">ล้างฟอร์ม</button>
+            </div>
+            <div class="msg" id="uMsg" role="alert"></div>
+          </form>
+          <p class="muted" style="font-size:13px;margin:4px 0 0">
+            <b>พนักงาน</b> เห็นเฉพาะเมนูยื่นใบลาและใบลาของฉัน · <b>ผู้อนุมัติ</b> ดู Dashboard และอนุมัติใบลาได้ ·
+            <b>ผู้ดูแลระบบ</b> ทำได้ทุกอย่างรวมถึงจัดการสิทธิ์</p>
+        </section>
+        <section class="card">
+          <div class="card-h"><h2>ผู้ใช้งานทั้งหมด <span class="muted" id="uCount"></span></h2></div>
+          <div class="tbl max"><table>
+            <thead><tr><th>รหัสพนักงาน</th><th>ชื่อ-สกุล</th><th>แผนก</th><th>สิทธิ์</th><th class="num">สถานะ</th><th></th></tr></thead>
+            <tbody id="uBody"></tbody>
+          </table></div>
+        </section>
+        <section class="card">
+          <div class="card-h"><h2>สิทธิ์วันลาต่อปี</h2></div>
+          <div class="tbl" style="max-width:420px"><table><thead><tr><th>ประเภท</th><th class="num">วัน/ปี</th></tr></thead><tbody id="quotaBody"></tbody></table></div>
+          <p class="muted" style="font-size:13px">แก้ไขสิทธิ์วันลา จำนวนพนักงาน รายชื่อแผนก ได้ที่ส่วน "ตั้งค่า" ในไฟล์ Code.gs</p>
+        </section>
+      </section>
+
+      <div class="foot" aria-hidden="true">
+        <svg class="wave" viewBox="0 0 1200 150" preserveAspectRatio="none">
+          <path d="M0 70C220 20 420 120 640 80S1000 10 1200 60V150H0z" fill="#DCE9FF"/>
+          <path d="M0 100C260 60 460 140 700 108S1020 60 1200 92V150H0z" fill="#C3D8FB"/>
+        </svg>
+        <div class="l">Work Smart<br>Care for People</div>
+        <div class="r">คนดี มีความสุข<br>องค์กรก้าวไกล อย่างยั่งยืน</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+  const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const MONTHS_FULL = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  const TYPE_COLORS = {'ลาพักร้อน':'#3B82F6','ลาป่วย':'#22A55B','ลากิจ':'#F59E0B','ลาคลอด':'#EC7FA9','ลาอื่นๆ':'#6B7280'};
+  const ST = { PENDING:'รออนุมัติ', APPROVED:'อนุมัติ', REJECTED:'ไม่อนุมัติ' };
+  const ST_VIEW = { 'รออนุมัติ':['p-wait','รออนุมัติ'], 'อนุมัติ':['p-ok','อนุมัติแล้ว'], 'ไม่อนุมัติ':['p-bad','ไม่อนุมัติ'] };
+  const STAFF = ['approver', 'admin'];
+
+  let TOKEN = '', USER = null, CFG = null, D = null, MY = null, USERS = [], charts = {};
+  const S = { view:'', month:'', dept:'', q:'', st:'', calMonth:null, balEmp:'' };
+
+  if (window.Chart) {
+    Chart.defaults.font.family = "'Prompt', system-ui, sans-serif";
+    Chart.defaults.color = '#66708A';
+  }
+
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const num = n => Number(n).toLocaleString('th-TH', {maximumFractionDigits: 1});
+  const typeColor = t => TYPE_COLORS[t] || '#6B7280';
+  const isStaff = () => USER && STAFF.includes(USER.role);
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+    del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  };
+
+  // ---------- เรียกฟังก์ชันฝั่งเซิร์ฟเวอร์ (แนบ token ให้อัตโนมัติ) ----------
+  function call(fn, ...args) {
+    return new Promise((resolve, reject) => {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(err => {
+          const m = String(err && err.message || err);
+          if (m.includes('SESSION_EXPIRED')) signOut(m.replace(/^.*SESSION_EXPIRED:\s*/, ''));
+          reject(new Error(m.replace(/^.*SESSION_EXPIRED:\s*/, '')));
+        })[fn](TOKEN, ...args);
+    });
+  }
+
+  // ---------- วันที่ ----------
+  const ymd = s => { const [y, m, d] = String(s).split('-').map(Number); return { y, m: m - 1, d }; };
+  const fmtDMY = s => { if (!s) return ''; const p = ymd(s.slice(0, 10)); return `${String(p.d).padStart(2,'0')}/${String(p.m+1).padStart(2,'0')}/${p.y}`; };
+  function fmtRange(a, b) {
+    const s = ymd(a), e = ymd(b), dd = n => String(n).padStart(2, '0');
+    if (a === b || !b) return `${dd(s.d)} ${MONTHS[s.m]}`;
+    if (s.m === e.m && s.y === e.y) return `${dd(s.d)}–${dd(e.d)} ${MONTHS[s.m]}`;
+    return `${dd(s.d)} ${MONTHS[s.m]} – ${dd(e.d)} ${MONTHS[e.m]}`;
+  }
+  const localISO = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+  // ---------- เข้าสู่ระบบ / ออกจากระบบ ----------
+  function showGate(msg) {
+    USER = null; D = null; MY = null;
+    applyRole();
+    $$('.view').forEach(v => v.classList.remove('on'));
+    $('gate').hidden = false;
+    $('gateErr').textContent = msg || '';
+    $('loginId').focus();
+  }
+
+  function signOut(msg) {
+    if (TOKEN) google.script.run.logout(TOKEN);
+    TOKEN = ''; store.del('leave_token');
+    showGate(msg);
+  }
+
+  $('gate').addEventListener('submit', e => {
+    e.preventDefault();
+    $('gateErr').textContent = '';
+    $('loginBtn').disabled = true; $('loginBtn').textContent = 'กำลังเข้าสู่ระบบ...';
+    google.script.run
+      .withSuccessHandler(res => {
+        TOKEN = res.token; store.set('leave_token', TOKEN);
+        $('pin').value = '';
+        $('loginBtn').disabled = false; $('loginBtn').textContent = 'เข้าสู่ระบบ';
+        start(res.user);
+      })
+      .withFailureHandler(err => {
+        $('gateErr').textContent = err.message;
+        $('loginBtn').disabled = false; $('loginBtn').textContent = 'เข้าสู่ระบบ';
+      })
+      .login($('loginId').value, $('pin').value);
+  });
+
+  // กลับเข้าระบบอัตโนมัติถ้ายังมี token ที่ไม่หมดอายุ
+  TOKEN = store.get('leave_token') || '';
+  if (TOKEN) call('whoami').then(start).catch(() => showGate());
+  else showGate();
+
+  async function start(user) {
+    USER = user;
+    $('gate').hidden = true;
+    $('userName').textContent = user.name;
+    $('userRole').textContent = user.roleName + (user.dept ? ' · ' + user.dept : '');
+    $('avatar').textContent = user.name.trim().charAt(0) || '?';
+    applyRole();
+    $('content').classList.add('loading');
+    try {
+      CFG = await call('getAppConfig');
+      initForm();
+      const jobs = [];
+      if (!USER.isSuper) jobs.push(loadMy());
+      if (isStaff()) jobs.push(loadDash());
+      await Promise.all(jobs);
+      go(isStaff() ? 'home' : 'leave');
+    } catch (err) {
+      if (USER) alert(err.message);
+    } finally {
+      $('content').classList.remove('loading');
+    }
+  }
+
+  // ซ่อน/แสดงเมนูและปุ่มตามสิทธิ์
+  function applyRole() {
+    $$('[data-roles]').forEach(el => el.hidden = !USER || !el.dataset.roles.split(' ').includes(USER.role));
+    $$('.self-only').forEach(el => { el.hidden = !USER || USER.isSuper; });
+    $('userMenu').hidden = !USER;
+    $('userDrop').hidden = true;
+  }
+
+  // ---------- เมนูผู้ใช้ ----------
+  $('userBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    $('userDrop').hidden = !$('userDrop').hidden;
+    $('userBtn').setAttribute('aria-expanded', String(!$('userDrop').hidden));
+  });
+  document.addEventListener('click', () => { $('userDrop').hidden = true; });
+  $('btnLogout').addEventListener('click', () => signOut());
+  $('btnPin').addEventListener('click', async () => {
+    const oldPin = prompt('PIN เดิม');
+    if (oldPin === null) return;
+    const newPin = prompt('PIN ใหม่ (ตัวเลข 4-12 หลัก)');
+    if (newPin === null) return;
+    if (prompt('ยืนยัน PIN ใหม่อีกครั้ง') !== newPin) { alert('PIN ใหม่ไม่ตรงกัน'); return; }
+    try { await call('changeMyPin', oldPin, newPin); signOut('เปลี่ยน PIN แล้ว กรุณาเข้าสู่ระบบด้วย PIN ใหม่'); }
+    catch (err) { alert(err.message); }
+  });
+
+  // ---------- เมนู ----------
+  const VIEW_ROLES = { home: STAFF, approve: STAFF, calendar: STAFF, employees: STAFF, report: STAFF, settings: ['admin'],
+                       leave: ['employee','approver','admin'], my: ['employee','approver','admin'] };
+  function go(view) {
+    if (!USER || !VIEW_ROLES[view] || !VIEW_ROLES[view].includes(USER.role)) return;
+    if (USER.isSuper && (view === 'leave' || view === 'my')) return;
+    S.view = view;
+    if (view === 'leave' && MY && MY.year !== new Date().getFullYear()) {
+      loadMy(new Date().getFullYear()).then(renderLeave).catch(err => alert(err.message));
+    }
+    $$('#nav [data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === view));
+    $$('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + view));
+    document.body.classList.remove('menu');
+    renderView();
+    window.scrollTo(0, 0);
+  }
+  $('nav').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (b) go(b.dataset.view); });
+  $('content').addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) go(b.dataset.go); });
+  $('menuBtn').addEventListener('click', () => document.body.classList.toggle('menu'));
+  $('scrim').addEventListener('click', () => document.body.classList.remove('menu'));
+  $('bell').addEventListener('click', () => { S.st = ST.PENDING; syncTabs(); go('approve'); });
+  $('q').addEventListener('input', e => {
+    S.q = e.target.value.trim().toLowerCase();
+    if (S.q && ['home','settings','report','leave','my'].includes(S.view)) go('employees'); else renderView();
+  });
+
+  function renderView() {
+    if (!USER) return;
+    const fn = { home: renderHome, approve: renderApprove, calendar: renderCalendar, employees: renderEmployees,
+                 report: renderReport, settings: renderSettings, leave: renderLeave, my: renderMy }[S.view];
+    if (!fn) return;
+    if (['home','approve','calendar','employees','report'].includes(S.view)) {
+      if (!D) return;
+      const scopeTxt = [S.month !== '' ? MONTHS_FULL[S.month] : null, 'ปี ' + D.year, S.dept || 'ทุกแผนก'].filter(Boolean).join(' · ');
+      $('scope').textContent = 'ช่วงข้อมูล: ' + scopeTxt;
+    }
+    fn();
+  }
+
+  function fillSelect(sel, options, value) {
+    sel.innerHTML = options.map(o => `<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('');
+    sel.value = value ?? '';
+  }
+  function pill(s) { const v = ST_VIEW[s] || ['p-wait', s]; return `<span class="pill ${v[0]}">${esc(v[1])}</span>`; }
+
+  function renderRing(arc, total, legend, used) {
+    const q = CFG.quota;
+    let left = 0, all = 0;
+    legend.innerHTML = CFG.leaveTypes.map(t => {
+      if (q[t] == null) return `<li><span class="dot" style="background:${typeColor(t)}"></span><span>${esc(t)}</span><b>-</b></li>`;
+      const rem = Math.max(q[t] - (used[t] || 0), 0); left += rem; all += q[t];
+      return `<li><span class="dot" style="background:${typeColor(t)}"></span><span>${esc(t)}</span><b>${num(rem)} วัน</b></li>`;
+    }).join('');
+    total.textContent = num(left);
+    const C = 2 * Math.PI * 50;
+    arc.setAttribute('stroke-dasharray', `${all ? left / all * C : 0} ${C}`);
+  }
+  const usedOf = rows => rows.filter(r => r.status === ST.APPROVED || r.status === ST.PENDING).reduce((m, r) => (m[r.type] = (m[r.type] || 0) + r.days, m), {});
+
+  // ================= ยื่นใบลา =================
+  function initForm() {
+    $('types').innerHTML = CFG.leaveTypes.map((t, i) => `
+      <label class="type" style="--c:${typeColor(t)}">
+        <input type="radio" name="type" value="${esc(t)}" ${i === 0 ? 'checked' : ''}><span>${esc(t)}</span>
+      </label>`).join('');
+    resetForm();
+  }
+  function resetForm() {
+    const today = localISO(new Date());
+    $('start').value = today; $('end').value = today; $('reason').value = ''; $('halfDay').checked = false;
+    $('msg').className = 'msg';
+    $('leaveForm').hidden = false; $('done').hidden = true;
+    $('submitBtn').disabled = false; $('submitBtn').textContent = 'ส่งใบลา';
+    updateTally();
+  }
+  function workdays(s, e) {
+    if (!s || !e) return 0;
+    const a = new Date(s + 'T00:00:00'), b = new Date(e + 'T00:00:00');
+    if (b < a) return -1;
+    let n = 0;
+    for (const d = new Date(a); d <= b; d.setDate(d.getDate() + 1)) {
+      const w = d.getDay();
+      if (w && w !== 6 && !(CFG.holidays || []).includes(localISO(d))) n++;
+    }
+    return n;
+  }
+  function updateTally() {
+    if ($('end').value < $('start').value) $('end').value = $('start').value;
+    const same = $('start').value === $('end').value;
+    let n = workdays($('start').value, $('end').value);
+    $('halfWrap').hidden = !same || n <= 0;
+    if (!same || n <= 0) $('halfDay').checked = false;
+    if (same && $('halfDay').checked && n) n = 0.5;
+    $('dayCount').textContent = n;
+    $('dayHint').textContent = n === 0 ? 'ช่วงนี้เป็นวันหยุดทั้งหมด' : 'ไม่นับเสาร์-อาทิตย์และวันหยุดบริษัท';
+  }
+  ['start','end','halfDay'].forEach(id => $(id).addEventListener('change', updateTally));
+
+  $('leaveForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    $('msg').className = 'msg';
+    const data = {
+      type: (document.querySelector('#types input:checked') || {}).value,
+      start: $('start').value, end: $('end').value,
+      halfDay: $('halfDay').checked, reason: $('reason').value
+    };
+    $('submitBtn').disabled = true; $('submitBtn').textContent = 'กำลังส่ง...';
+    try {
+      const res = await call('submitLeave', data);
+      $('leaveForm').hidden = true;
+      $('doneId').textContent = res.id;
+      $('doneDays').textContent = `${data.type} ${res.days} วัน (${fmtRange(data.start, data.end)} ${ymd(data.end).y})`;
+      $('done').hidden = false;
+      loadMy().then(() => S.view === 'leave' && renderLeave()).catch(err => alert('ส่งใบลาแล้ว แต่โหลดข้อมูลใหม่ไม่สำเร็จ: ' + err.message));
+      if (isStaff()) loadDash().catch(err => alert('โหลด Dashboard ไม่สำเร็จ: ' + err.message));
+    } catch (err) {
+      $('msg').textContent = err.message || 'ส่งใบลาไม่สำเร็จ ลองอีกครั้ง';
+      $('msg').className = 'msg err';
+      $('submitBtn').disabled = false; $('submitBtn').textContent = 'ส่งใบลา';
+    }
+  });
+  $('againBtn').addEventListener('click', resetForm);
+
+  function renderLeave() {
+    $('helloName').textContent = USER.name;
+    $('helloSub').textContent = `รหัส ${USER.empId}${USER.dept ? ' · แผนก ' + USER.dept : ''}`;
+    if (!MY) return;
+    $('myBalYear').textContent = 'ปี ' + MY.year + ' · หักใบลารออนุมัติด้วย';
+    renderRing($('myRingArc'), $('myBalTotal'), $('myBalLegend'), usedOf(MY.rows));
+  }
+
+  // ================= ใบลาของฉัน =================
+  async function loadMy(year) {
+    MY = await call('getMyLeaves', year || null);
+    fillSelect($('myYear'), MY.years.map(y => ({v: y, t: 'ปี ' + y})), MY.year);
+  }
+  $('myYear').addEventListener('change', async e => {
+    try { await loadMy(Number(e.target.value)); renderView(); } catch (err) { alert(err.message); }
+  });
+
+  function renderMy() {
+    if (!MY) return;
+    const rows = MY.rows.slice().sort((a, b) => b.submitted.localeCompare(a.submitted));
+    $('mAll').textContent = num(rows.length);
+    $('mPend').textContent = num(rows.filter(r => r.status === ST.PENDING).length);
+    $('mOk').textContent = num(rows.filter(r => r.status === ST.APPROVED).reduce((s, r) => s + r.days, 0));
+    $('mBad').textContent = num(rows.filter(r => r.status === ST.REJECTED).length);
+    $('myBody').innerHTML = rows.length ? rows.map(r => `
+      <tr><td>${fmtDMY(r.submitted)}<br><small class="muted">${esc(r.id)}</small></td>
+        <td><span class="tdot" style="background:${typeColor(r.type)}"></span>${esc(r.type)}${r.reason ? `<br><small class="muted">${esc(r.reason)}</small>` : ''}</td>
+        <td style="white-space:nowrap">${fmtRange(r.start, r.end)}</td><td class="num">${num(r.days)}</td>
+        <td class="num">${pill(r.status)}</td><td>${esc(r.approver) || '-'}</td><td class="muted">${esc(r.note) || '-'}</td></tr>`).join('')
+      : '<tr><td colspan="7" class="empty">ยังไม่มีใบลาในปีนี้ · <button class="linkbtn" data-go="leave">ยื่นใบลา</button></td></tr>';
+  }
+
+  // ================= Dashboard (ผู้อนุมัติ / ผู้ดูแล) =================
+  async function loadDash(year) {
+    D = await call('getDashboardData', year || (D && D.year) || null);
+    initStatic();
+    renderView();
+  }
+
+  function initStatic() {
+    $$('.ySel').forEach(s => fillSelect(s, D.years.map(y => ({v: y, t: 'ปี ' + y})), D.year));
+    fillSelect($('fMonth'), [{v:'', t:'ทุกเดือน'}].concat(MONTHS_FULL.map((m, i) => ({v: i, t: m}))), S.month);
+    fillSelect($('fDept'), [{v:'', t:'ทุกแผนก'}].concat(D.config.departments.map(x => ({v: x, t: x}))), S.dept);
+    $('lnkSheet').href = D.sheetUrl;
+    $('quotaBody').innerHTML = D.config.leaveTypes.map(t =>
+      `<tr><td><span class="tdot" style="background:${typeColor(t)}"></span>${esc(t)}</td><td class="num">${D.config.quota[t] ?? 'ไม่จำกัด'}</td></tr>`).join('');
+    const pend = D.rows.filter(r => r.status === ST.PENDING && ymd(r.start).y === D.year).length;
+    $('bellN').textContent = pend; $('bellN').hidden = !pend;
+  }
+
+  $$('.ySel').forEach(s => s.addEventListener('change', e => { S.calMonth = null; loadDash(Number(e.target.value)).catch(err => alert(err.message)); }));
+  $('fMonth').addEventListener('change', e => { S.month = e.target.value; S.calMonth = null; renderView(); });
+  $('fDept').addEventListener('change', e => { S.dept = e.target.value; renderView(); });
+
+  const inYear = r => ymd(r.start).y === D.year;
+  const inDept = r => !S.dept || r.dept === S.dept;
+  const inMonth = r => S.month === '' || ymd(r.start).m === Number(S.month);
+  const matchQ = r => !S.q || [r.name, r.empId, r.dept].some(v => String(v).toLowerCase().includes(S.q));
+  const scoped = () => D.rows.filter(r => inYear(r) && inDept(r) && inMonth(r));
+  const byNewest = (a, b) => b.submitted.localeCompare(a.submitted);
+
+  function delta(status, el, goodWhenUp) {
+    const now = new Date();
+    const refM = S.month !== '' ? Number(S.month) : (D.year === now.getFullYear() ? now.getMonth() : 11);
+    const prevY = refM === 0 ? D.year - 1 : D.year, prevM = (refM + 11) % 12;
+    const count = (y, m) => D.rows.filter(r => { const p = ymd(r.start); return p.y === y && p.m === m && inDept(r) && r.status === status; }).length;
+    const cur = count(D.year, refM), prev = count(prevY, prevM);
+    if (!prev) { el.innerHTML = ''; return; }
+    const pct = Math.round((cur - prev) / prev * 100);
+    if (!pct) { el.innerHTML = '<b>เท่าเดิม</b><br>จากเดือนก่อน'; return; }
+    const up = pct > 0, good = up === goodWhenUp;
+    el.innerHTML = `<b style="color:${good ? 'var(--ok)' : 'var(--bad)'}">${up ? '▲ +' : '▼ '}${pct}%</b><br>จากเดือนก่อน`;
+  }
+
+  function renderHome() {
+    const rows = scoped();
+    const counted = rows.filter(r => r.status !== ST.REJECTED);
+
+    $('kEmp').textContent = num(D.config.totalEmployees);
+    $('kPend').textContent = num(rows.filter(r => r.status === ST.PENDING).length);
+    $('kOk').textContent = num(rows.filter(r => r.status === ST.APPROVED).length);
+    $('kBad').textContent = num(rows.filter(r => r.status === ST.REJECTED).length);
+    delta(ST.APPROVED, $('kOkD'), true);
+    delta(ST.REJECTED, $('kBadD'), false);
+
+    // สัดส่วนประเภทการลา (นับจำนวนใบลา ไม่รวมที่ไม่อนุมัติ)
+    $('typeTitle').textContent = 'สัดส่วนประเภทการลา (' + (S.month !== '' ? MONTHS_FULL[S.month] + ' ' : 'ปี ') + D.year + ')';
+    const types = D.config.leaveTypes;
+    const tc = types.map(t => counted.filter(r => r.type === t).length);
+    const total = counted.length;
+    $('typeTotal').textContent = num(total);
+    $('typeLegend').innerHTML = types.map((t, i) =>
+      `<li><span class="dot" style="background:${typeColor(t)}"></span><span>${esc(t)}</span><b>${total ? Math.round(tc[i] / total * 100) : 0}%</b></li>`).join('');
+    draw('cType', {
+      type: 'doughnut',
+      data: { labels: types, datasets: [{ data: total ? tc : [1], backgroundColor: total ? types.map(typeColor) : ['#EEF2F8'], borderWidth: 3, borderColor: '#fff' }] },
+      options: { cutout: '58%', plugins: { legend: { display: false },
+        tooltip: { enabled: !!total, callbacks: { label: c => ` ${c.label}: ${num(c.raw)} รายการ` } } } }
+    });
+
+    // แนวโน้มรายเดือน แยกประเภท (ทั้งปี ตามแผนกที่เลือก)
+    const yearRows = D.rows.filter(r => inYear(r) && inDept(r) && r.status !== ST.REJECTED);
+    draw('cMonth', {
+      type: 'bar',
+      data: { labels: MONTHS, datasets: types.map(t => ({
+        label: t, backgroundColor: typeColor(t), borderRadius: 3, barPercentage: .6,
+        data: MONTHS.map((_, m) => yearRows.filter(r => r.type === t && ymd(r.start).m === m).length)
+      })) },
+      options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, boxHeight: 12, useBorderRadius: true, borderRadius: 3 } } },
+        scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#EEF2F8' } } } }
+    });
+
+    // Top 5
+    const top = aggregateEmployees(counted).sort((a, b) => b.days - a.days).slice(0, 5);
+    $('topBody').innerHTML = top.length ? top.map((e, i) =>
+      `<tr><td class="num">${i + 1}</td><td>${esc(e.name)}</td><td>${esc(e.dept)}</td><td class="num"><b>${num(e.days)}</b></td></tr>`).join('')
+      : '<tr><td colspan="4" class="empty">ยังไม่มีข้อมูล</td></tr>';
+
+    renderBalance();
+
+    // รายการล่าสุด
+    const recent = rows.slice().sort(byNewest).slice(0, 6);
+    $('recentBody').innerHTML = recent.length ? recent.map(r => `
+      <tr><td>${fmtDMY(r.submitted)}</td><td>${esc(r.name)}</td>
+        <td><span class="tdot" style="background:${typeColor(r.type)}"></span>${esc(r.type)}</td>
+        <td style="white-space:nowrap">${fmtRange(r.start, r.end)}</td><td class="num">${num(r.days)}</td>
+        <td class="num">${pill(r.status)}</td><td>${esc(r.approver) || '-'}</td><td class="muted">${esc(r.note) || '-'}</td></tr>`).join('')
+      : '<tr><td colspan="8" class="empty">ยังไม่มีใบลาในช่วงนี้ ลองเปลี่ยนตัวกรองด้านบน</td></tr>';
+  }
+
+  function aggregateEmployees(list) {
+    const m = {};
+    list.forEach(r => {
+      const k = r.empId + '|' + r.name;
+      m[k] = m[k] || { key: k, name: r.name, empId: r.empId, dept: r.dept, days: 0, times: 0, byType: {} };
+      m[k].days += r.days; m[k].times++;
+      m[k].byType[r.type] = (m[k].byType[r.type] || 0) + r.days;
+    });
+    return Object.values(m);
+  }
+
+  // วันลาคงเหลือ: สิทธิ์ต่อปี - วันที่อนุมัติแล้วในปีที่เลือก
+  const usedFor = empId => usedOf(D.rows.filter(r => inYear(r) && r.empId === empId));
+  function renderBalance() {
+    const emps = aggregateEmployees(D.rows.filter(inYear)).sort((a, b) => a.name.localeCompare(b.name, 'th'));
+    if (!S.balEmp || !emps.some(e => e.empId === S.balEmp)) {
+      S.balEmp = emps.some(e => e.empId === USER.empId) ? USER.empId : (emps[0] ? emps[0].empId : '');
+    }
+    fillSelect($('balEmp'), emps.length ? emps.map(e => ({v: e.empId, t: e.name})) : [{v: '', t: 'ยังไม่มีพนักงาน'}], S.balEmp);
+    renderRing($('ringArc'), $('balTotal'), $('balLegend'), usedFor(S.balEmp));
+  }
+  $('balEmp').addEventListener('change', e => { S.balEmp = e.target.value; renderBalance(); });
+
+  function draw(id, cfg) {
+    if (!window.Chart) {
+      $(id).setAttribute('aria-label', 'โหลดกราฟไม่สำเร็จ กรุณารีเฟรชหน้าเว็บ');
+      return;
+    }
+    cfg.options = Object.assign({ responsive: true, maintainAspectRatio: false }, cfg.options);
+    if (charts[id]) charts[id].destroy();
+    charts[id] = new Chart($(id), cfg);
+  }
+
+  // ---------- อนุมัติใบลา ----------
+  function syncTabs() { $$('#stTabs button').forEach(b => b.classList.toggle('on', b.dataset.st === S.st)); }
+  $('stTabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.st = b.dataset.st; syncTabs(); renderApprove(); });
+
+  function renderApprove() {
+    const rows = scoped().filter(r => (!S.st || r.status === S.st) && matchQ(r)).sort(byNewest);
+    const canAct = r => r.status === ST.PENDING && r.empId.toLowerCase() !== USER.empId.toLowerCase();
+    $('allBody').innerHTML = rows.length ? rows.map(r => `
+      <tr><td style="white-space:nowrap">${fmtDMY(r.submitted)}<br><small class="muted">${esc(r.id)}</small></td>
+        <td><b>${esc(r.name)}</b><br><small class="muted">${esc(r.empId)}</small></td><td>${esc(r.dept)}</td>
+        <td><span class="tdot" style="background:${typeColor(r.type)}"></span>${esc(r.type)}${r.reason ? `<br><small class="muted">${esc(r.reason)}</small>` : ''}</td>
+        <td style="white-space:nowrap">${fmtRange(r.start, r.end)}</td><td class="num">${num(r.days)}</td>
+        <td class="num">${pill(r.status)}</td>
+        <td>${esc(r.approver) || '-'}${r.note ? `<br><small class="muted">${esc(r.note)}</small>` : ''}</td>
+        <td>${canAct(r) ? `<div class="act">
+          <button class="yes" data-id="${esc(r.id)}" data-s="${ST.APPROVED}">อนุมัติ</button>
+          <button class="no" data-id="${esc(r.id)}" data-s="${ST.REJECTED}">ไม่อนุมัติ</button></div>`
+          : (r.status === ST.PENDING ? '<small class="muted">ใบลาของคุณ</small>' : '')}</td></tr>`).join('')
+      : '<tr><td colspan="9" class="empty">ไม่พบใบลาตามเงื่อนไขนี้</td></tr>';
+  }
+
+  $('allBody').addEventListener('click', async e => {
+    const b = e.target.closest('button[data-id]');
+    if (!b) return;
+    let note = '';
+    if (b.dataset.s === ST.REJECTED) {
+      note = prompt('เหตุผลที่ไม่อนุมัติใบลา ' + b.dataset.id + ' (ไม่บังคับ)', '');
+      if (note === null) return;
+    }
+    b.parentElement.querySelectorAll('button').forEach(x => x.disabled = true);
+    try { await call('updateStatus', b.dataset.id, b.dataset.s, note); }
+    catch (err) { alert(err.message); }
+    try { await loadDash(D.year); } catch (err) {}
+  });
+
+  // ---------- ปฏิทิน ----------
+  function renderCalendar() {
+    const now = new Date();
+    if (S.calMonth === null) S.calMonth = S.month !== '' ? Number(S.month) : (D.year === now.getFullYear() ? now.getMonth() : 0);
+    const y = D.year, m = S.calMonth;
+    $('calTitle').textContent = MONTHS_FULL[m] + ' ' + y;
+    $('calPrev').disabled = m === 0; $('calNext').disabled = m === 11;
+
+    const list = D.rows.filter(r => inYear(r) && inDept(r) && matchQ(r) && r.status !== ST.REJECTED);
+    const startDow = new Date(y, m, 1).getDay(), daysIn = new Date(y, m + 1, 0).getDate();
+    const todayKey = localISO(now);
+    let html = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'].map(d => `<div class="h">${d}</div>`).join('');
+    const cells = Math.ceil((startDow + daysIn) / 7) * 7;
+    for (let i = 0; i < cells; i++) {
+      const dt = new Date(y, m, 1 - startDow + i), k = localISO(dt);
+      const out = dt.getMonth() !== m, wk = dt.getDay() === 0 || dt.getDay() === 6;
+      const evs = out || wk ? [] : list.filter(r => r.start <= k && k <= r.end);
+      html += `<div class="d${out ? ' out' : ''}${k === todayKey ? ' today' : ''}"><span class="dn">${dt.getDate()}</span>` +
+        evs.slice(0, 3).map(r => `<span class="ev${r.status === ST.PENDING ? ' pending' : ''}" style="--c:${typeColor(r.type)}" title="${esc(r.name)} · ${esc(r.type)} · ${esc(r.status)}">${esc(r.name.split(' ')[0])}</span>`).join('') +
+        (evs.length > 3 ? `<span class="more">+${evs.length - 3} คน</span>` : '') + '</div>';
+    }
+    $('cal').innerHTML = html;
+  }
+  $('calPrev').addEventListener('click', () => { S.calMonth = Math.max(0, S.calMonth - 1); renderCalendar(); });
+  $('calNext').addEventListener('click', () => { S.calMonth = Math.min(11, S.calMonth + 1); renderCalendar(); });
+
+  // ---------- ข้อมูลพนักงาน ----------
+  function renderEmployees() {
+    const types = D.config.leaveTypes, q = D.config.quota;
+    $('empTitle').textContent = 'ข้อมูลพนักงาน · ปี ' + D.year + (S.q ? ` · ค้นหา "${S.q}"` : '');
+    $('empHead').innerHTML = `<tr><th>ชื่อ-สกุล</th><th>รหัส</th><th>แผนก</th><th class="num">ครั้ง</th>${types.map(t => `<th class="num">${esc(t)}</th>`).join('')}<th class="num">พักร้อนคงเหลือ</th></tr>`;
+    const emps = aggregateEmployees(D.rows.filter(r => inYear(r) && inDept(r) && inMonth(r) && r.status === ST.APPROVED && matchQ(r)))
+      .sort((a, b) => b.days - a.days);
+    $('empBody').innerHTML = emps.length ? emps.map(e => {
+      const used = usedFor(e.empId);
+      const vac = q['ลาพักร้อน'] != null ? num(Math.max(q['ลาพักร้อน'] - (used['ลาพักร้อน'] || 0), 0)) : '-';
+      return `<tr><td><b>${esc(e.name)}</b></td><td>${esc(e.empId)}</td><td>${esc(e.dept)}</td><td class="num">${e.times}</td>
+        ${types.map(t => `<td class="num">${e.byType[t] ? num(e.byType[t]) : '<span class="muted">-</span>'}</td>`).join('')}<td class="num"><b>${vac}</b></td></tr>`;
+    }).join('') : `<tr><td colspan="${types.length + 5}" class="empty">ไม่พบพนักงานที่มีใบลาอนุมัติแล้วในช่วงนี้</td></tr>`;
+  }
+
+  // ---------- รายงาน ----------
+  function renderReport() {
+    const types = D.config.leaveTypes;
+    const rows = scoped().filter(r => r.status !== ST.REJECTED);
+    $('repTitle').textContent = 'วันลาแยกตามแผนกและประเภท · ' + (S.month !== '' ? MONTHS_FULL[S.month] + ' ' : 'ปี ') + D.year;
+    $('repHead').innerHTML = `<tr><th>แผนก</th>${types.map(t => `<th class="num">${esc(t)}</th>`).join('')}<th class="num">รวม (วัน)</th></tr>`;
+    const depts = Array.from(new Set(D.config.departments.concat(rows.map(r => r.dept))));
+    const sum = f => rows.filter(f).reduce((s, r) => s + r.days, 0);
+    const lines = depts.map(d => ({ d, v: types.map(t => sum(r => r.dept === d && r.type === t)) }))
+      .map(x => Object.assign(x, { t: x.v.reduce((a, b) => a + b, 0) })).filter(x => x.t > 0).sort((a, b) => b.t - a.t);
+    $('repBody').innerHTML = (lines.length ? lines.map(x =>
+      `<tr><td>${esc(x.d)}</td>${x.v.map(v => `<td class="num">${v ? num(v) : '<span class="muted">-</span>'}</td>`).join('')}<td class="num"><b>${num(x.t)}</b></td></tr>`).join('')
+      : `<tr><td colspan="${types.length + 2}" class="empty">ยังไม่มีข้อมูล</td></tr>`) +
+      (lines.length ? `<tr><th>รวม</th>${types.map(t => `<th class="num">${num(sum(r => r.type === t))}</th>`).join('')}<th class="num">${num(sum(() => true))}</th></tr>` : '');
+    $('repLinks').innerHTML = USER.role === 'admin'
+      ? `<a href="${esc(D.sheetUrl)}" target="_blank" rel="noopener">เปิดข้อมูลใน Google Sheets ↗</a>`
+      : '<span class="muted">ข้อมูลต้นฉบับเก็บใน Google Sheets (ผู้ดูแลระบบเป็นผู้เปิดดูได้)</span>';
+  }
+
+  // ================= ตั้งค่าและสิทธิ์ (admin) =================
+  let usersLoaded = false;
+  async function renderSettings() {
+    fillSelect($('uDept'), [{v:'', t:'เลือกแผนก'}].concat(CFG.departments.map(d => ({v: d, t: d}))), $('uDept').value);
+    fillSelect($('uRole'), Object.entries(CFG.roles).map(([v, t]) => ({v, t})), $('uRole').value || 'employee');
+    if (!usersLoaded) {
+      $('uBody').innerHTML = '<tr><td colspan="6" class="empty">กำลังโหลด...</td></tr>';
+      try { USERS = await call('listUsers'); usersLoaded = true; } catch (err) { $('uBody').innerHTML = `<tr><td colspan="6" class="empty">${esc(err.message)}</td></tr>`; return; }
+    }
+    renderUsers();
+  }
+
+  function renderUsers() {
+    const list = USERS.filter(u => !S.q || [u.empId, u.name, u.dept].some(v => String(v).toLowerCase().includes(S.q)));
+    $('uCount').textContent = `(${USERS.filter(u => u.active).length} ใช้งาน / ${USERS.length} ทั้งหมด)`;
+    $('uBody').innerHTML = list.length ? list.map(u => `
+      <tr><td><b>${esc(u.empId)}</b></td><td>${esc(u.name)}</td><td>${esc(u.dept)}</td>
+        <td><span class="role role-${esc(u.role)}">${esc(u.roleName)}</span></td>
+        <td class="num">${u.active ? '<span class="pill p-ok">ใช้งาน</span>' : '<span class="pill p-bad">ปิดใช้งาน</span>'}</td>
+        <td><button class="linkbtn" data-edit="${esc(u.empId)}">แก้ไข</button></td></tr>`).join('')
+      : '<tr><td colspan="6" class="empty">ยังไม่มีผู้ใช้งาน เพิ่มพนักงานคนแรกจากฟอร์มด้านบน</td></tr>';
+  }
+
+  function resetUserForm() {
+    $('userForm').reset();
+    $('uEmp').readOnly = false;
+    $('uActive').checked = true;
+    $('uRole').value = 'employee';
+    $('uPin').placeholder = 'ผู้ใช้ใหม่ต้องตั้ง PIN';
+    $('uFormTitle').textContent = 'เพิ่มผู้ใช้งาน';
+    $('uMsg').className = 'msg';
+  }
+  $('uReset').addEventListener('click', resetUserForm);
+
+  $('uBody').addEventListener('click', e => {
+    const b = e.target.closest('[data-edit]');
+    if (!b) return;
+    const u = USERS.find(x => x.empId === b.dataset.edit);
+    if (!u) return;
+    $('uEmp').value = u.empId; $('uEmp').readOnly = true;
+    $('uName').value = u.name; $('uDept').value = u.dept; $('uRole').value = u.role;
+    $('uActive').checked = u.active; $('uPin').value = '';
+    $('uPin').placeholder = 'เว้นว่าง = ใช้ PIN เดิม';
+    $('uFormTitle').textContent = 'แก้ไขผู้ใช้งาน: ' + u.empId;
+    $('uMsg').className = 'msg';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  $('userForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    $('uMsg').className = 'msg';
+    $('uSave').disabled = true;
+    const editing = $('uEmp').readOnly;
+    try {
+      USERS = await call('saveUser', {
+        empId: $('uEmp').value, name: $('uName').value, dept: $('uDept').value,
+        role: $('uRole').value, active: $('uActive').checked, pin: $('uPin').value
+      });
+      const id = $('uEmp').value.trim();
+      resetUserForm();
+      $('uMsg').textContent = (editing ? 'บันทึกการแก้ไข ' : 'เพิ่มผู้ใช้ ') + id + ' แล้ว';
+      $('uMsg').className = 'msg ok';
+      renderUsers();
+      if (D) loadDash().catch(() => {});
+    } catch (err) {
+      $('uMsg').textContent = err.message;
+      $('uMsg').className = 'msg err';
+    } finally {
+      $('uSave').disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

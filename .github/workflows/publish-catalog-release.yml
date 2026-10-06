@@ -1,0 +1,53 @@
+name: Test and update FactoryStudio Catalog
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: leave-management-catalog
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      CATALOG_API_URL: https://catalog.factorystudio.pro
+      CATALOG_PRODUCT_SLUG: leave-management-system
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test leave policy and authorization
+        run: npm test
+      - name: Verify motion graphic source
+        working-directory: installation-video
+        run: |
+          npm ci
+          npm run lint
+      - name: Package customer source files
+        run: |
+          mkdir -p dist
+          git archive --format=zip --output=dist/source-code.zip HEAD Code.gs Dashboard.html appsscript.json README.md docs installation-video package.json tests
+      - name: Request GitHub OIDC token
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOKEN="$(curl --fail-with-body --silent --show-error --header "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=https%3A%2F%2Fcatalog.factorystudio.pro" | jq -er '.value')"
+          echo "::add-mask::$TOKEN"
+          echo "CATALOG_SYNC_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+      - name: Sync source, documentation and product metadata
+        run: node tools/publish-catalog.cjs
+      - name: Keep source package as build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: leave-management-source
+          path: dist/source-code.zip
