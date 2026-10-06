@@ -1,4 +1,5 @@
-import { Composition, Folder, Sequence } from "remotion";
+import { Composition, Folder, Sequence, Still } from "remotion";
+import { Cover } from "./Cover";
 import { Intro } from "./scenes/Intro";
 import { Project } from "./scenes/Project";
 import { Security } from "./scenes/Security";
@@ -41,6 +42,7 @@ export const InstallationGuide = () => (
 );
 export const RemotionRoot = () => (
   <>
+    <Still id="ProductCover" component={Cover} width={1080} height={1920} />
     <Composition
       id="InstallationGuide"
       component={InstallationGuide}
