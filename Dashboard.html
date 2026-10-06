@@ -729,6 +729,7 @@
     TOKEN = ''; store.del('leave_token');
     $('passwordDialog').close(); $('passwordForm').reset();
     $('password').value = ''; $('password').type = 'password'; $('showPassword').checked = false;
+    resetUserForm();
     USERS = []; usersLoaded = false;
     showGate(msg);
   }
