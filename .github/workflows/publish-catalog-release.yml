@@ -27,16 +27,22 @@ jobs:
         with:
           node-version: '22'
       - name: Test leave policy and authorization
-        run: npm test
+        run: |
+          npm ci
+          npm test
       - name: Verify motion graphic source
         working-directory: installation-video
         run: |
           npm ci
           npm run lint
+      - name: Verify standalone password crypto bundle
+        run: |
+          node tools/build-password-crypto.cjs
+          git diff --exit-code -- PasswordCrypto.gs docs/password-crypto-LICENSE.txt
       - name: Package customer source files
         run: |
           mkdir -p dist
-          git archive --format=zip --output=dist/source-code.zip HEAD Code.gs Dashboard.html appsscript.json README.md docs installation-video package.json tests
+          git archive --format=zip --output=dist/source-code.zip HEAD Code.gs PasswordCrypto.gs Dashboard.html appsscript.json README.md docs installation-video package.json package-lock.json tests tools/password-crypto-entry.mjs tools/build-password-crypto.cjs
       - name: Request GitHub OIDC token
         shell: bash
         run: |

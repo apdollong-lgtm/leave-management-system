@@ -6,13 +6,14 @@ export const Project = () => (
     title={"สร้างโปรเจกต์\nGoogle Apps Script"}
     lines={[
       "เปิด script.google.com → New project",
-      "วาง Code.gs และสร้าง HTML ชื่อ Dashboard",
+      "วาง Code.gs, PasswordCrypto.gs และ Dashboard",
       "เปิดแสดง appsscript.json ใน Project Settings",
     ]}
-    note="คัดลอกเนื้อหาให้ครบทั้ง 3 ไฟล์ แล้วบันทึกโปรเจกต์"
+    note="คัดลอกเนื้อหาให้ครบทั้ง 4 ไฟล์ แล้วบันทึกโปรเจกต์"
   >
     <Card title="Apps Script / Files">
       <Row label="Script" value="Code.gs" active />
+      <Row label="Crypto" value="PasswordCrypto.gs" />
       <Row label="HTML" value="Dashboard.html" />
       <Row label="Manifest" value="appsscript.json" />
       <Action>Save project</Action>

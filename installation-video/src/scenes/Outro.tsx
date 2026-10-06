@@ -12,7 +12,7 @@ export const Outro = () => (
     note="อัปเดตโค้ด: Deploy → Manage deployments → Edit → New version เพื่อรักษาลิงก์เดิม"
   >
     <Card title="Installation checklist">
-      <Row label="ตั้งค่า PIN + องค์กร" value="✓" />
+      <Row label="ตั้งรหัสผ่าน + องค์กร" value="✓" />
       <Row label="สร้างชีต + ผู้ใช้งาน" value="✓" />
       <Row label="ทดสอบส่ง + อนุมัติ" value="✓" active />
       <Action>FactoryStudio · Better Tomorrow</Action>

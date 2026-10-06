@@ -15,15 +15,15 @@
  *   2) เปิดโปรเจกต์ใน Apps Script แล้ว Run ฟังก์ชัน setup 1 ครั้ง เพื่ออนุญาตสิทธิ์
  *      ระบบจะสร้าง Google Sheets สำหรับเก็บข้อมูลให้อัตโนมัติ
  *      (หรือใส่ SPREADSHEET_ID ด้านล่าง เพื่อใช้ชีตที่มีอยู่แล้ว)
- *   3) เข้าเว็บด้วยรหัสพนักงาน "admin" + ADMIN_PIN แล้วเพิ่มพนักงานในเมนู "ตั้งค่า"
- *   เปลี่ยน ADMIN_PIN ได้โดยไม่ต้องแก้โค้ด: Project Settings > Script Properties > ADMIN_PIN
+ *   3) เข้าเว็บด้วยชื่อผู้ใช้ "admin" + รหัสผ่านผู้ดูแล แล้วเพิ่มพนักงานในเมนู "ตั้งค่า"
+ *   ตั้ง ADMIN_PASSWORD ที่ Project Settings > Script Properties แล้วรัน setup
  */
 
 // ===== ตั้งค่า =====
 const SHEET_NAME = 'LeaveRequests';
 const USERS_SHEET_NAME = 'Users';
-const ADMIN_PIN  = ''; // ต้องตั้ง Script Property "ADMIN_PIN" ก่อนเปิดใช้งาน
-const SUPER_ADMIN_ID = 'admin'; // รหัสเข้าระบบของผู้ดูแลหลัก (ไม่ต้องมีในชีต Users)
+// ตั้ง ADMIN_PASSWORD ใน Script Properties แล้วรัน setup เพื่อเก็บเป็น hash
+const SUPER_ADMIN_ID = 'admin'; // รหัสอ้างอิงผู้ดูแลหลัก (ชื่อเข้าสู่ระบบตั้งผ่าน ADMIN_USERNAME)
 
 // ไอดีของ Google Sheets ที่ใช้เก็บข้อมูล (เว้นว่าง = สร้างไฟล์ใหม่ให้อัตโนมัติครั้งแรก)
 const SPREADSHEET_ID = '';
@@ -56,8 +56,9 @@ const HEADERS = [
 // ตำแหน่งคอลัมน์ (index เริ่มที่ 0)
 const C = { ID:0, TS:1, NAME:2, EMP:3, DEPT:4, TYPE:5, START:6, END:7, DAYS:8, REASON:9, STATUS:10, ACTED:11, APPROVER:12, NOTE:13 };
 
-const USER_HEADERS = ['รหัสพนักงาน', 'ชื่อ-นามสกุล', 'แผนก', 'สิทธิ์', 'PIN (เข้ารหัส)', 'ใช้งาน', 'อัปเดตล่าสุด'];
-const U = { EMP:0, NAME:1, DEPT:2, ROLE:3, PIN:4, ACTIVE:5, UPDATED:6 };
+const USER_HEADERS = ['รหัสพนักงาน', 'ชื่อ-นามสกุล', 'แผนก', 'สิทธิ์', 'Password hash', 'ใช้งาน', 'อัปเดตล่าสุด', 'ชื่อผู้ใช้'];
+const U = { EMP:0, NAME:1, DEPT:2, ROLE:3, PASSWORD:4, ACTIVE:5, UPDATED:6, USERNAME:7 };
+const PASSWORD_ITERATIONS = 600000;
 
 // ===== Web App =====
 function doGet() {
@@ -71,8 +72,7 @@ function doGet() {
 
 /** รันครั้งแรกครั้งเดียว เพื่ออนุญาตสิทธิ์ และสร้างชีตข้อมูล */
 function setup() {
-  adminPin_();
-  hashPin_(SUPER_ADMIN_ID, adminPin_());
+  adminPasswordHash_();
   const sh = getSheet_();
   getUsersSheet_();
   Logger.log('พร้อมใช้งาน: ' + sh.getParent().getUrl());
@@ -136,28 +136,80 @@ function getUsersSheet_() {
       .setFontWeight('bold').setBackground('#1F3A68').setFontColor('#FFFFFF');
     sh.setFrozenRows(1);
     sh.getRange('A:A').setNumberFormat('@'); // รหัสพนักงานเป็นข้อความ (กันเลข 0 นำหน้าหาย)
+    sh.getRange('H:H').setNumberFormat('@');
     sh.getRange('G:G').setNumberFormat('yyyy-mm-dd hh:mm');
     sh.setColumnWidth(2, 180);
+  }
+  if (sh.getLastColumn() < USER_HEADERS.length) {
+    sh.getRange(1, U.USERNAME + 1).setValue(USER_HEADERS[U.USERNAME]);
+    sh.getRange('H:H').setNumberFormat('@');
+  }
+  if (String(sh.getRange(1, U.PASSWORD + 1).getValue()) === 'PIN (เข้ารหัส)') {
+    sh.getRange(1, U.PASSWORD + 1).setValue(USER_HEADERS[U.PASSWORD]);
   }
   return sh;
 }
 
 // ===== ผู้ใช้งานและการเข้าสู่ระบบ =====
-function adminPin_() {
-  const pin = PropertiesService.getScriptProperties().getProperty('ADMIN_PIN') || ADMIN_PIN;
-  if (!/^\d{6,12}$/.test(pin) || /^(\d)\1+$/.test(pin) || pin === '123456') {
-    throw new Error('กรุณาตั้ง ADMIN_PIN ใน Script Properties เป็นตัวเลข 6-12 หลักที่คาดเดายาก');
-  }
-  return pin;
+function adminUsername_() {
+  const username = PropertiesService.getScriptProperties().getProperty('ADMIN_USERNAME') || 'admin';
+  validateUsername_(username);
+  return username;
 }
 
-function hashPin_(empId, pin) {
+function adminPasswordHash_() {
   const props = PropertiesService.getScriptProperties();
-  let salt = props.getProperty('PIN_SALT');
-  if (!salt) { salt = Utilities.getUuid(); props.setProperty('PIN_SALT', salt); }
-  const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,
-    salt + '|' + String(empId).toLowerCase() + '|' + String(pin), Utilities.Charset.UTF_8);
-  return Utilities.base64Encode(bytes);
+  const configured = props.getProperty('ADMIN_PASSWORD');
+  if (configured) {
+    validatePassword_(configured);
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try {
+      const latest = props.getProperty('ADMIN_PASSWORD');
+      if (latest) {
+        validatePassword_(latest);
+        props.setProperty('ADMIN_PASSWORD_HASH', hashPassword_(latest));
+        props.deleteProperty('ADMIN_PASSWORD');
+      }
+    } finally { lock.releaseLock(); }
+  }
+  const hash = props.getProperty('ADMIN_PASSWORD_HASH');
+  if (!hash || !hash.startsWith('pbkdf2-sha256$')) throw new Error('กรุณาตั้ง ADMIN_PASSWORD ใน Script Properties แล้วรัน setup');
+  return hash;
+}
+
+function passwordBytes_(text) {
+  return new Uint8Array(Utilities.newBlob(String(text)).getBytes().map(value => value & 255));
+}
+
+function hashPassword_(password) {
+  validatePassword_(password);
+  const salt = Utilities.getUuid();
+  const bytes = PasswordCrypto.derive(passwordBytes_(password), passwordBytes_(salt), PASSWORD_ITERATIONS);
+  return 'pbkdf2-sha256$' + PASSWORD_ITERATIONS + '$' + salt + '$' + Utilities.base64Encode(Array.from(bytes, value => value > 127 ? value - 256 : value));
+}
+
+function verifyPassword_(password, encoded) {
+  const parts = String(encoded || '').split('$');
+  if (parts.length !== 4 || parts[0] !== 'pbkdf2-sha256' || Number(parts[1]) !== PASSWORD_ITERATIONS || !/^[a-f0-9-]{36}$/i.test(parts[2])) return false;
+  if (String(password).length > 128) return false;
+  const bytes = PasswordCrypto.derive(passwordBytes_(password), passwordBytes_(parts[2]), PASSWORD_ITERATIONS);
+  const actual = Utilities.base64Encode(Array.from(bytes, value => value > 127 ? value - 256 : value));
+  if (actual.length !== parts[3].length) return false;
+  let difference = 0;
+  for (let i = 0; i < actual.length; i++) difference |= actual.charCodeAt(i) ^ parts[3].charCodeAt(i);
+  return difference === 0;
+}
+
+function validateUsername_(username) {
+  if (!/^[A-Za-z0-9_.-]{3,30}$/.test(String(username || ''))) throw new Error('ชื่อผู้ใช้ต้องมี 3-30 ตัว ใช้ A-Z, 0-9, _ - .');
+}
+
+function validatePassword_(password) {
+  const value = String(password || '');
+  if (value.length < 12 || value.length > 128 || /^\s+$/.test(value) || /^\d+$/.test(value)) {
+    throw new Error('รหัสผ่านต้องยาว 12-128 ตัวอักษร และไม่เป็นตัวเลขล้วน');
+  }
 }
 
 function readUsers_() {
@@ -170,7 +222,8 @@ function readUsers_() {
       name: String(r[U.NAME]).trim(),
       dept: String(r[U.DEPT]).trim(),
       role: Object.prototype.hasOwnProperty.call(ROLES, r[U.ROLE]) ? String(r[U.ROLE]) : 'employee',
-      pinHash: String(r[U.PIN]),
+      passwordHash: String(r[U.PASSWORD]),
+      username: String(r[U.USERNAME] || r[U.EMP]).trim(),
       active: r[U.ACTIVE] === true || String(r[U.ACTIVE]).toUpperCase() === 'TRUE'
     }))
     .filter(u => u.empId);
@@ -182,34 +235,35 @@ function findUser_(empId) {
 }
 
 const publicUser_ = u => ({
-  empId: u.empId, name: u.name, dept: u.dept, role: u.role, roleName: ROLES[u.role],
+  empId: u.empId, username: u.username, name: u.name, dept: u.dept, role: u.role, roleName: ROLES[u.role],
   isSuper: u.empId === SUPER_ADMIN_ID
 });
 
 function superAdmin_() {
-  return { empId: SUPER_ADMIN_ID, name: 'ผู้ดูแลระบบ', dept: '', role: 'admin' };
+  return { empId: SUPER_ADMIN_ID, username: adminUsername_(), passwordHash: adminPasswordHash_(), name: 'ผู้ดูแลระบบ', dept: '', role: 'admin' };
 }
 
-function login(empId, pin) {
-  empId = String(empId || '').trim();
-  pin = String(pin || '').trim();
-  if (!empId || !pin) throw new Error('กรุณากรอกรหัสพนักงานและ PIN');
+function login(username, password) {
+  username = String(username || '').trim();
+  password = String(password || '');
+  if (!username || !password || username.length > 30 || password.length > 128) throw new Error('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน');
 
   const cache = CacheService.getScriptCache();
-  const failKey = 'fail:' + empId.toLowerCase();
+  const failKey = 'fail:' + username.toLowerCase();
   const fails = Number(cache.get(failKey) || 0);
-  if (fails >= 5) throw new Error('ใส่ PIN ผิดหลายครั้ง กรุณารอ 10 นาทีแล้วลองใหม่');
+  if (fails >= 5) throw new Error('ใส่รหัสผ่านผิดหลายครั้ง กรุณารอ 10 นาทีแล้วลองใหม่');
 
   let user = null;
-  if (empId.toLowerCase() === SUPER_ADMIN_ID) {
-    if (pin === String(adminPin_())) user = superAdmin_();
+  if (username.toLowerCase() === adminUsername_().toLowerCase()) {
+    const admin = superAdmin_();
+    if (verifyPassword_(password, admin.passwordHash)) user = admin;
   } else {
-    const u = findUser_(empId);
-    if (u && u.active && u.pinHash && u.pinHash === hashPin_(u.empId, pin)) user = u;
+    const u = readUsers_().find(account => account.username.toLowerCase() === username.toLowerCase());
+    if (u && u.active && verifyPassword_(password, u.passwordHash)) user = u;
   }
   if (!user) {
     cache.put(failKey, String(fails + 1), 600);
-    throw new Error('รหัสพนักงานหรือ PIN ไม่ถูกต้อง');
+    throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
   }
   cache.remove(failKey);
   const token = Utilities.getUuid();
@@ -235,13 +289,14 @@ function session_(token, roles) {
     user = findUser_(empId);
     if (!user || !user.active) throw new Error('SESSION_EXPIRED: บัญชีนี้ถูกปิดการใช้งาน');
   }
-  if (stored.fingerprint !== sessionFingerprint_(user)) throw new Error('SESSION_EXPIRED: PIN เปลี่ยนแล้ว กรุณาเข้าสู่ระบบใหม่');
+  if (stored.fingerprint !== sessionFingerprint_(user)) throw new Error('SESSION_EXPIRED: ข้อมูลเข้าสู่ระบบเปลี่ยนแล้ว กรุณาเข้าสู่ระบบใหม่');
   if (roles && roles.indexOf(user.role) < 0) throw new Error('คุณไม่มีสิทธิ์ใช้งานส่วนนี้');
   return user;
 }
 
 function sessionFingerprint_(user) {
-  return hashPin_(user.empId, user.empId === SUPER_ADMIN_ID ? adminPin_() : user.pinHash);
+  return Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,
+    user.empId + '|' + user.username + '|' + user.passwordHash, Utilities.Charset.UTF_8));
 }
 
 function whoami(token) {
@@ -253,24 +308,28 @@ function getAppConfig(token) {
   return { leaveTypes: LEAVE_TYPES, departments: DEPARTMENTS, quota: LEAVE_QUOTA, roles: ROLES, holidays: HOLIDAYS };
 }
 
-function changeMyPin(token, oldPin, newPin) {
+function changeMyPassword(token, oldPassword, newPassword) {
   const user = session_(token);
-  if (user.empId === SUPER_ADMIN_ID) throw new Error('เปลี่ยน PIN ผู้ดูแลหลักได้ที่ Script Properties > ADMIN_PIN');
-  validatePin_(newPin);
-  if (user.pinHash !== hashPin_(user.empId, String(oldPin || '').trim())) throw new Error('PIN เดิมไม่ถูกต้อง');
-  getUsersSheet_().getRange(user.row, U.PIN + 1).setValue(hashPin_(user.empId, String(newPin).trim()));
-  getUsersSheet_().getRange(user.row, U.UPDATED + 1).setValue(new Date());
+  validatePassword_(newPassword);
+  if (!verifyPassword_(String(oldPassword || ''), user.passwordHash)) throw new Error('รหัสผ่านเดิมไม่ถูกต้อง');
+  const hash = hashPassword_(newPassword);
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const latest = session_(token);
+    if (latest.passwordHash !== user.passwordHash) throw new Error('ข้อมูลเข้าสู่ระบบเปลี่ยนแล้ว กรุณาเข้าสู่ระบบใหม่');
+    if (user.empId === SUPER_ADMIN_ID) PropertiesService.getScriptProperties().setProperty('ADMIN_PASSWORD_HASH', hash);
+    else {
+      getUsersSheet_().getRange(user.row, U.PASSWORD + 1).setValue(hash);
+      getUsersSheet_().getRange(user.row, U.UPDATED + 1).setValue(new Date());
+    }
+  } finally { lock.releaseLock(); }
   return true;
-}
-
-function validatePin_(pin) {
-  if (!/^\d{4,12}$/.test(String(pin || '').trim())) throw new Error('PIN ต้องเป็นตัวเลข 4-12 หลัก');
 }
 
 // ===== จัดการผู้ใช้งาน (admin) =====
 function listUsers(token) {
   session_(token, ['admin']);
-  return readUsers_().map(u => Object.assign(publicUser_(u), { active: u.active, hasPin: !!u.pinHash }))
+  return readUsers_().map(u => Object.assign(publicUser_(u), { active: u.active, hasPassword: u.passwordHash.startsWith('pbkdf2-sha256$') }))
     .sort((a, b) => a.empId.localeCompare(b.empId));
 }
 
@@ -282,14 +341,18 @@ function saveUser(token, data) {
   const dept = String(data.dept || '').trim();
   const role = String(data.role || 'employee');
   const active = data.active !== false;
-  const pin = String(data.pin || '').trim();
+  const password = String(data.password || '');
+  const username = String(data.username || data.empId || '').trim();
+  const ownCredentialsChanged = me.empId.toLowerCase() === empId.toLowerCase() && (!!password || username !== me.username);
+  validateUsername_(username);
+  if (username.toLowerCase() === adminUsername_().toLowerCase()) throw new Error('ชื่อผู้ใช้นี้สงวนไว้สำหรับผู้ดูแลหลัก');
 
   if (!/^[A-Za-z0-9_\-.]{1,30}$/.test(empId)) throw new Error('รหัสพนักงานใช้ได้เฉพาะ A-Z, 0-9, _ - . (ไม่เกิน 30 ตัว)');
   if (empId.toLowerCase() === SUPER_ADMIN_ID) throw new Error('รหัส "' + SUPER_ADMIN_ID + '" สงวนไว้สำหรับผู้ดูแลหลัก');
   if (!name) throw new Error('กรุณากรอกชื่อ-นามสกุล');
   if (DEPARTMENTS.indexOf(dept) < 0) throw new Error('กรุณาเลือกแผนก');
   if (!Object.prototype.hasOwnProperty.call(ROLES, role)) throw new Error('สิทธิ์ไม่ถูกต้อง');
-  if (pin) validatePin_(pin);
+  if (password) validatePassword_(password);
   if (me.empId.toLowerCase() === empId.toLowerCase() && (role !== 'admin' || !active)) {
     throw new Error('ลดสิทธิ์หรือปิดบัญชีของตัวเองไม่ได้');
   }
@@ -299,15 +362,17 @@ function saveUser(token, data) {
   try {
     const sh = getUsersSheet_();
     const existing = findUser_(empId);
-    if (!existing && !pin) throw new Error('ผู้ใช้ใหม่ต้องตั้ง PIN');
-    const pinHash = pin ? hashPin_(empId, pin) : existing.pinHash;
-    const row = [existing ? existing.empId : empId, sheetText_(name), dept, role, pinHash, active, new Date()];
+    if (readUsers_().some(u => u.username.toLowerCase() === username.toLowerCase() && u.empId.toLowerCase() !== empId.toLowerCase())) throw new Error('ชื่อผู้ใช้นี้ถูกใช้แล้ว');
+    if ((!existing || !existing.passwordHash.startsWith('pbkdf2-sha256$')) && !password) throw new Error('ต้องตั้งรหัสผ่านใหม่สำหรับบัญชีนี้');
+    const passwordHash = password ? hashPassword_(password) : existing.passwordHash;
+    const row = [existing ? existing.empId : empId, sheetText_(name), dept, role, passwordHash, active, new Date(), username];
     if (existing) sh.getRange(existing.row, 1, 1, row.length).setValues([row]);
     else sh.appendRow(row);
   } finally {
     lock.releaseLock();
   }
-  return listUsers(token);
+  // Credentials were saved successfully; the caller must sign in again with them.
+  return ownCredentialsChanged ? [] : listUsers(token);
 }
 
 // ===== ใบลา =====

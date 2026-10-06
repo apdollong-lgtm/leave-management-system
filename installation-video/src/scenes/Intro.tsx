@@ -9,7 +9,7 @@ export const Intro = () => (
       "ข้อมูลเก็บใน Google Sheets ขององค์กร",
       "คู่มือนี้พาไปตั้งค่าจนทดสอบได้",
     ]}
-    note="เตรียม Code.gs, Dashboard.html และ appsscript.json จากแพ็กเกจสินค้า"
+    note="เตรียม Code.gs, PasswordCrypto.gs, Dashboard.html และ appsscript.json จากแพ็กเกจสินค้า"
   >
     <Card title="Leave Management / FactoryStudio">
       <Row label="พนักงาน" value="ยื่นใบลาและติดตามสถานะ" />

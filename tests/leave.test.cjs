@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const crypto = require('node:crypto');
 
 function app() {
-  const rows = [], users = [], properties = new Map([['ADMIN_PIN','83927461'],['PIN_SALT','test-salt']]), cache = new Map();
+  const rows = [], users = [], properties = new Map([['ADMIN_PASSWORD','Admin!Secure2026']]), cache = new Map();
   const sheet = values => ({
     getLastRow: () => values.length + 1,
     getRange: (row, col, count = 1, width = 1) => ({
@@ -16,10 +16,12 @@ function app() {
     appendRow: row => values.push(row),
   });
   const ctx = vm.createContext({
-    PropertiesService: {getScriptProperties: () => ({getProperty: k => properties.get(k),setProperty: (k,v) => properties.set(k,v)})},
+    PropertiesService: {getScriptProperties: () => ({getProperty: k => properties.get(k),setProperty: (k,v) => properties.set(k,v),deleteProperty: k => properties.delete(k)})},
     CacheService: {getScriptCache: () => ({get: k => cache.get(k),put: (k,v) => cache.set(k,v),remove: k => cache.delete(k)})},
     LockService: {getScriptLock: () => ({waitLock(){},releaseLock(){}})},
+    PasswordCrypto: {derive: (password,salt,iterations) => crypto.pbkdf2Sync(Buffer.from(password),Buffer.from(salt),iterations,32,'sha256')},
     Utilities: {
+      newBlob: value => ({getBytes: () => Array.from(Buffer.from(value,'utf8'))}),
       getUuid: () => crypto.randomUUID(),
       formatDate: (date,tz,pattern) => {
         const p = new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);
@@ -32,14 +34,15 @@ function app() {
     },
   });
   vm.runInContext(fs.readFileSync('Code.gs','utf8'),ctx);
+  const originalGetUsersSheet = ctx.getUsersSheet_;
   ctx.getSheet_ = () => sheet(rows);
   ctx.getUsersSheet_ = () => sheet(users);
-  const admin = ctx.login('admin','83927461').token;
-  ctx.saveUser(admin,{empId:'E001',name:'Employee',dept:'QC',role:'employee',pin:'675839'});
-  ctx.saveUser(admin,{empId:'A001',name:'Approver',dept:'QA',role:'approver',pin:'786594'});
-  const employee = ctx.login('E001','675839').token;
-  const approver = ctx.login('A001','786594').token;
-  return {ctx,rows,users,properties,admin,employee,approver};
+  const admin = ctx.login('admin','Admin!Secure2026').token;
+  ctx.saveUser(admin,{empId:'E001',name:'Employee',dept:'QC',role:'employee',password:'Employee!2026'});
+  ctx.saveUser(admin,{empId:'A001',name:'Approver',dept:'QA',role:'approver',password:'Approver!2026'});
+  const employee = ctx.login('E001','Employee!2026').token;
+  const approver = ctx.login('A001','Approver!2026').token;
+  return {ctx,rows,users,properties,admin,employee,approver,originalGetUsersSheet};
 }
 const form = extra => ({type:'ลาพักร้อน',start:'2026-10-06',end:'2026-10-06',reason:'พักผ่อน',...extra});
 
@@ -94,8 +97,8 @@ test('employees cannot approve or list users; approvers cannot approve own leave
 });
 test('admin employees also cannot approve own leave; super admin cannot submit', () => {
   const {ctx,admin} = app();
-  ctx.saveUser(admin,{empId:'HR1',name:'HR',dept:'บุคคล',role:'admin',pin:'786594'});
-  const token=ctx.login('HR1','786594').token;
+  ctx.saveUser(admin,{empId:'HR1',name:'HR',dept:'บุคคล',role:'admin',password:'Approver!2026'});
+  const token=ctx.login('HR1','Approver!2026').token;
   const result=ctx.submitLeave(token,form());
   assert.throws(() => ctx.updateStatus(token,result.id,'อนุมัติ',''),/ตัวเอง/);
   assert.throws(() => ctx.submitLeave(admin,form()),/ผู้ดูแลหลัก/);
@@ -112,24 +115,87 @@ test('own leave queries exclude other users, users expose no hashes', () => {
   ctx.submitLeave(employee,form()); ctx.submitLeave(approver,form());
   assert.equal(ctx.getMyLeaves(employee,2026).rows.length,1);
   assert.equal(ctx.getMyLeaves(employee,2026).rows[0].empId,'E001');
-  assert.equal('pinHash' in ctx.listUsers(admin)[0],false);
+  assert.equal('passwordHash' in ctx.listUsers(admin)[0],false);
 });
-test('invalid role, weak admin PIN, and brute force are rejected', () => {
+test('invalid role, weak admin password, and brute force are rejected', () => {
   const {ctx,admin,properties} = app();
-  assert.throws(() => ctx.saveUser(admin,{empId:'bad',name:'Bad',dept:'QC',role:'constructor',pin:'675839'}),/สิทธิ์/);
+  assert.throws(() => ctx.saveUser(admin,{empId:'bad',name:'Bad',dept:'QC',role:'constructor',password:'Employee!2026'}),/สิทธิ์/);
   for(let i=0;i<5;i++) assert.throws(() => ctx.login('E001','0000'),/ไม่ถูกต้อง/);
-  assert.throws(() => ctx.login('E001','675839'),/10 นาที/);
-  properties.set('ADMIN_PIN','1234'); assert.throws(() => ctx.adminPin_(),/ADMIN_PIN/);
+  assert.throws(() => ctx.login('E001','Employee!2026'),/10 นาที/);
+  properties.set('ADMIN_PASSWORD','1234'); assert.throws(() => ctx.adminPasswordHash_(),/รหัสผ่าน/);
 });
 test('formula-like text is stored as plain text', () => {
   const {ctx,employee,rows} = app();
   ctx.submitLeave(employee,form({reason:'=IMPORTXML("https://example.com", "x")'}));
   assert.ok(rows[0][9].startsWith("'="));
 });
-test('changing PIN invalidates prior sessions and accepts the new PIN', () => {
+test('changing password invalidates prior sessions and accepts the new password', () => {
   const {ctx,employee}=app();
-  ctx.changeMyPin(employee,'675839','938475');
+  ctx.changeMyPassword(employee,'Employee!2026','Updated!Password2026');
   assert.throws(()=>ctx.whoami(employee),/SESSION_EXPIRED/);
+  assert.throws(()=>ctx.login('E001','Employee!2026'),/ไม่ถูกต้อง/);
+  assert.ok(ctx.login('E001','Updated!Password2026').token);
+});
+test('usernames are separate from employee IDs and are unique regardless of case', () => {
+  const {ctx,admin,employee}=app();
+  ctx.saveUser(admin,{empId:'E001',username:'somchai',name:'Employee',dept:'QC',role:'employee'});
+  assert.equal(ctx.login('SOMCHAI','Employee!2026').user.empId,'E001');
+  assert.throws(()=>ctx.login('E001','Employee!2026'),/ไม่ถูกต้อง/);
+  assert.throws(()=>ctx.whoami(employee),/SESSION_EXPIRED/);
+  assert.throws(()=>ctx.saveUser(admin,{empId:'E002',username:'Somchai',name:'Other',dept:'QC',password:'Employee!2026'}),/ถูกใช้แล้ว/);
+});
+test('legacy numeric PIN hashes cannot authenticate and require administrator reset', () => {
+  const {ctx,admin,users}=app();
+  users[0][4]='old-pin-hash';
   assert.throws(()=>ctx.login('E001','675839'),/ไม่ถูกต้อง/);
-  assert.ok(ctx.login('E001','938475').token);
+  assert.equal(ctx.listUsers(admin).find(u=>u.empId==='E001').hasPassword,false);
+  assert.throws(()=>ctx.saveUser(admin,{empId:'E001',username:'E001',name:'Employee',dept:'QC'}),/รหัสผ่านใหม่/);
+  ctx.saveUser(admin,{empId:'E001',username:'E001',name:'Employee',dept:'QC',password:'Reset!Password2026'});
+  assert.ok(ctx.login('E001','Reset!Password2026').token);
+});
+test('hashes use individual salts; preserve password spaces and reject numeric-only passwords', () => {
+  const {ctx,properties}=app();
+  const a=ctx.hashPassword_(' Thai password 2026 '),b=ctx.hashPassword_(' Thai password 2026 ');
+  assert.notEqual(a,b);
+  assert.ok(ctx.verifyPassword_(' Thai password 2026 ',a));
+  assert.equal(ctx.verifyPassword_('Thai password 2026',a),false);
+  assert.throws(()=>ctx.validatePassword_('123456789012'),/รหัสผ่าน/);
+  assert.equal(properties.has('ADMIN_PASSWORD'),false);
+  assert.ok(properties.get('ADMIN_PASSWORD_HASH').startsWith('pbkdf2-sha256$600000$'));
+});
+test('Apps Script crypto bundle agrees with Node PBKDF2 for Thai password bytes', () => {
+  const ctx=vm.createContext({Uint8Array});
+  vm.runInContext(fs.readFileSync('PasswordCrypto.gs','utf8'),ctx);
+  const password=Buffer.from('รหัสผ่านทดสอบ!2026'),salt=Buffer.from('test-salt');
+  const expected=crypto.pbkdf2Sync(password,salt,600000,32,'sha256');
+  assert.deepEqual(Buffer.from(ctx.PasswordCrypto.derive(password,salt,600000)),expected);
+});
+test('legacy Users header migration leaves account data intact', () => {
+  const {ctx,users,originalGetUsersSheet}=app();
+  const before=JSON.stringify(users);
+  const headers=['รหัสพนักงาน','ชื่อ-นามสกุล','แผนก','สิทธิ์','PIN (เข้ารหัส)','ใช้งาน','อัปเดตล่าสุด'];
+  const legacy={getLastRow:()=>3,getLastColumn:()=>headers.length,getRange:(row,col)=>({
+    getValue:()=>headers[col-1],setValue:value=>{headers[col-1]=value;},setNumberFormat(){return this;}
+  })};
+  ctx.getSpreadsheet_=()=>({getSheetByName:()=>legacy});
+  originalGetUsersSheet();
+  assert.equal(headers[4],'Password hash');
+  assert.equal(headers[7],'ชื่อผู้ใช้');
+  assert.equal(JSON.stringify(users),before);
+});
+test('super admin can change password and old sessions lose access', () => {
+  const {ctx,admin}=app();
+  ctx.changeMyPassword(admin,'Admin!Secure2026','Replaced!Admin2026');
+  assert.throws(()=>ctx.listUsers(admin),/SESSION_EXPIRED/);
+  assert.throws(()=>ctx.login('admin','Admin!Secure2026'),/ไม่ถูกต้อง/);
+  assert.ok(ctx.login('admin','Replaced!Admin2026').token);
+});
+test('admin saving their own credentials succeeds before forcing reauthentication', () => {
+  const {ctx,admin}=app();
+  ctx.saveUser(admin,{empId:'HR1',username:'hr.manager',name:'HR',dept:'บุคคล',role:'admin',password:'Manager!Password2026'});
+  const token=ctx.login('hr.manager','Manager!Password2026').token;
+  const result=ctx.saveUser(token,{empId:'HR1',username:'hr.manager.new',name:'HR',dept:'บุคคล',role:'admin',password:'Updated!Manager2026'});
+  assert.equal(result.length,0);
+  assert.throws(()=>ctx.whoami(token),/SESSION_EXPIRED/);
+  assert.equal(ctx.login('hr.manager.new','Updated!Manager2026').user.empId,'HR1');
 });

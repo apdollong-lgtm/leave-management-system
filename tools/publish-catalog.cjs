@@ -9,7 +9,7 @@ async function publish() {
   if(base !== 'https://catalog.factorystudio.pro' || slug !== 'leave-management-system' || !token) throw new Error('Catalog settings or OIDC token are unavailable');
   const tracked = execFileSync('git',['ls-files'],{encoding:'utf8'}).trim().split('\n');
   if(tracked.some(file => /(^|\/)\.(env|clasp|clasprc|dev\.vars)(\.|$)|\.(pem|p12|pfx|key)$|(^|\/)(credentials|secrets?)\.(json|ya?ml)$/i.test(file))) throw new Error('Secret-like tracked file detected');
-  const source = execFileSync('git',['archive','--format=tar','HEAD','Code.gs','Dashboard.html','appsscript.json','README.md','docs','installation-video','package.json','tests'],{maxBuffer:20*1024*1024});
+  const source = execFileSync('git',['archive','--format=tar','HEAD','Code.gs','PasswordCrypto.gs','Dashboard.html','appsscript.json','README.md','docs','installation-video','package.json','package-lock.json','tests','tools/password-crypto-entry.mjs','tools/build-password-crypto.cjs'],{maxBuffer:20*1024*1024});
   if(/AKIA[0-9A-Z]{16}|BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY/.test(source.toString('latin1'))) throw new Error('Secret-like source content detected');
   const revision = (process.env.GITHUB_SHA || execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim()).slice(0,8);
   const version = require('../package.json').version + '+' + revision;

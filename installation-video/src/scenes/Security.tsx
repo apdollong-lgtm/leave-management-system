@@ -3,16 +3,16 @@ export const Security = () => (
   <Scene
     step="02"
     kicker="SECURE ADMIN"
-    title={"ตั้ง PIN ผู้ดูแล\nก่อนเปิดใช้งาน"}
+    title={"ตั้งรหัสผ่านผู้ดูแล\nก่อนเปิดใช้งาน"}
     lines={[
       "Project Settings → Script Properties",
-      "เพิ่มชื่อ ADMIN_PIN",
-      "ใช้ตัวเลข 6–12 หลักที่คาดเดายาก",
+      "เพิ่มชื่อ ADMIN_PASSWORD",
+      "ใช้รหัสผ่าน 12–128 ตัวอักษรที่คาดเดายาก",
     ]}
-    note="เก็บ PIN เป็นความลับ ไม่ใส่ใน GitHub หรือคู่มือที่ส่งให้คนอื่น"
+    note="setup จะแปลงรหัสผ่านเป็น hash และลบรหัสผ่านตั้งต้นออกจาก Script Properties"
   >
     <Card title="Project Settings / Script Properties">
-      <Row label="Property" value="ADMIN_PIN" active />
+      <Row label="Property" value="ADMIN_PASSWORD" active />
       <Row label="Value" value="● ● ● ● ● ● ● ●" />
       <Row label="Time zone" value="Asia/Bangkok" />
       <Action>Save script properties</Action>

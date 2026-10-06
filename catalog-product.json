@@ -4,15 +4,53 @@
   "nameTh": "ระบบลางานออนไลน์ — ยื่นใบลา อนุมัติ และติดตามวันลา",
   "description": "Installable Google Apps Script and Google Sheets leave request system with employee, approver and administrator roles. Includes workday and holiday validation, overlap checks, annual quota reservation, Thai PDF manual and editable landscape Remotion installation tutorial. Configure and test in the buyer's Google account before production use.",
   "descriptionTh": "ระบบลางานสำหรับติดตั้งในบัญชี Google ขององค์กร แยกสิทธิ์พนักงาน ผู้อนุมัติ และผู้ดูแล ตรวจวันทำงาน วันหยุดบริษัท ใบลาซ้อน และโควตาประจำปี พร้อมคู่มือติดตั้ง PDF และต้นฉบับวิดีโอแนวนอน Remotion ต้องตั้งค่าและทดสอบครบวงจรในบัญชีผู้ซื้อก่อนใช้งานจริง",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "status": "Beta",
   "language": "Google Apps Script / HTML / JavaScript",
   "category": "Human Resources",
   "accent": "#2563eb",
-  "tags": ["HR", "Leave management", "Google Apps Script", "Google Sheets"],
-  "tagsTh": ["ทรัพยากรบุคคล", "ระบบลางาน", "ใบลาออนไลน์", "Google Sheets"],
-  "features": ["Employee, approver and administrator roles", "Workday and company holiday calculation", "Overlapping leave and annual quota validation", "Approval history, dashboard and calendar", "Thai PDF installation guide", "Editable landscape Remotion motion graphics"],
-  "featuresTh": ["ยื่นใบลาและติดตามสถานะ", "แยกสิทธิ์พนักงาน ผู้อนุมัติ และผู้ดูแล", "ตรวจวันหยุด ใบลาซ้อน และโควตาประจำปี", "ห้ามอนุมัติใบลาของตัวเอง", "Dashboard ปฏิทิน และรายงาน", "คู่มือติดตั้ง PDF และต้นฉบับวิดีโอ Motion Graphic"],
-  "requirements": ["Google account with Apps Script access", "Google Sheets and allowed Web app deployment", "Administrator PIN configured before use", "Organization leave policy and holidays", "End-to-end verification in the buyer's account"],
-  "requirementsTh": ["บัญชี Google ที่ใช้ Apps Script ได้", "สิทธิ์สร้าง Google Sheets และเผยแพร่ Web app", "ตั้ง PIN ผู้ดูแลก่อนใช้งาน", "ปรับนโยบายวันลาและวันหยุดตามองค์กร", "ทดสอบส่งใบลาและอนุมัติบนเว็บจริงก่อนส่งมอบ"]
+  "tags": [
+    "HR",
+    "Leave management",
+    "Google Apps Script",
+    "Google Sheets"
+  ],
+  "tagsTh": [
+    "ทรัพยากรบุคคล",
+    "ระบบลางาน",
+    "ใบลาออนไลน์",
+    "Google Sheets"
+  ],
+  "features": [
+    "Username and password login with salted PBKDF2 hashing",
+    "Employee, approver and administrator roles",
+    "Workday and company holiday calculation",
+    "Overlapping leave and annual quota validation",
+    "Approval history, dashboard and calendar",
+    "Thai PDF installation guide",
+    "Editable landscape Remotion motion graphics"
+  ],
+  "featuresTh": [
+    "เข้าสู่ระบบด้วยชื่อผู้ใช้และรหัสผ่าน",
+    "ยื่นใบลาและติดตามสถานะ",
+    "แยกสิทธิ์พนักงาน ผู้อนุมัติ และผู้ดูแล",
+    "ตรวจวันหยุด ใบลาซ้อน และโควตาประจำปี",
+    "ห้ามอนุมัติใบลาของตัวเอง",
+    "Dashboard ปฏิทิน และรายงาน",
+    "คู่มือติดตั้ง PDF และต้นฉบับวิดีโอ Motion Graphic"
+  ],
+  "requirements": [
+    "Google account with Apps Script access",
+    "Google Sheets and allowed Web app deployment",
+    "Administrator username and password configured before use",
+    "Organization leave policy and holidays",
+    "End-to-end verification in the buyer's account"
+  ],
+  "requirementsTh": [
+    "บัญชี Google ที่ใช้ Apps Script ได้",
+    "สิทธิ์สร้าง Google Sheets และเผยแพร่ Web app",
+    "ตั้งชื่อผู้ใช้และรหัสผ่าน ผู้ดูแลก่อนใช้งาน",
+    "ปรับนโยบายวันลาและวันหยุดตามองค์กร",
+    "ทดสอบส่งใบลาและอนุมัติบนเว็บจริงก่อนส่งมอบ"
+  ]
 }

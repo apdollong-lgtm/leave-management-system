@@ -173,7 +173,11 @@
   #gate h2{margin:6px 0 2px}
   #gate p{color:var(--muted);margin:0 0 16px}
   #gate input{width:100%;font-size:17px;text-align:center;padding:11px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:10px}
-  #gate input#pin{letter-spacing:.3em}
+  #gate .show-password{display:flex;gap:8px;align-items:center;text-align:left;margin:0 0 12px;color:var(--muted)}
+  #gate .show-password input{width:auto;margin:0}
+  dialog{border:1px solid var(--line);border-radius:16px;padding:24px;width:min(420px,90vw);box-shadow:var(--shadow)}
+  dialog::backdrop{background:rgba(26,35,64,.45)}
+  dialog input{display:block;width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;margin:6px 0 14px}
   #gate input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(37,99,235,.18)}
   #gate button{width:100%;margin-top:4px;font-weight:600;color:#fff;background:var(--brand);border:0;border-radius:10px;padding:12px;cursor:pointer}
   #gate button:hover{background:var(--brand-dark)}
@@ -338,7 +342,7 @@
           <svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="m6 9 6 6 6-6"/></svg>
         </button>
         <div class="dropdown" id="userDrop" hidden>
-          <button id="btnPin" class="self-only">เปลี่ยน PIN</button>
+          <button id="btnPassword">เปลี่ยนรหัสผ่าน</button>
           <button id="btnLogout">ออกจากระบบ</button>
         </div>
       </div>
@@ -348,10 +352,12 @@
       <form id="gate" class="card" hidden>
         <svg class="i" viewBox="0 0 24 24" style="width:40px;height:40px;color:var(--brand)"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
         <h2>เข้าสู่ระบบการลา</h2>
-        <p>ใช้รหัสพนักงานและ PIN ที่ได้รับจากผู้ดูแลระบบ</p>
-        <input type="text" id="loginId" autocomplete="username" placeholder="รหัสพนักงาน" aria-label="รหัสพนักงาน" required>
-        <input type="password" id="pin" inputmode="numeric" autocomplete="current-password" placeholder="PIN" aria-label="PIN" required>
+        <p>เข้าสู่ระบบด้วยชื่อผู้ใช้และรหัสผ่าน</p>
+        <input type="text" id="loginId" autocomplete="username" maxlength="30" placeholder="ชื่อผู้ใช้ / Username" aria-label="ชื่อผู้ใช้" autocapitalize="none" spellcheck="false" required>
+        <input type="password" id="password" maxlength="128" autocomplete="current-password" placeholder="รหัสผ่าน / Password" aria-label="รหัสผ่าน" required>
+        <label class="show-password"><input type="checkbox" id="showPassword"> แสดงรหัสผ่าน</label>
         <button type="submit" id="loginBtn">เข้าสู่ระบบ</button>
+        <p style="font-size:12px;margin-top:14px">ลืมรหัสผ่าน? ติดต่อผู้ดูแลระบบเพื่อรีเซ็ต</p>
         <div class="err" id="gateErr" role="alert"></div>
       </form>
 
@@ -601,12 +607,13 @@
       <section class="view" id="v-settings">
         <section class="card">
           <div class="card-h"><h2 id="uFormTitle">เพิ่มผู้ใช้งาน</h2></div>
-          <form id="userForm" class="uform" novalidate>
+          <form id="userForm" class="uform">
+            <div class="field"><label for="uUsername">ชื่อผู้ใช้ (Username)</label><input id="uUsername" required minlength="3" maxlength="30" autocomplete="off" placeholder="เช่น somchai" pattern="[A-Za-z0-9_.\-]{3,30}"></div>
             <div class="field"><label for="uEmp">รหัสพนักงาน</label><input id="uEmp" required maxlength="30" placeholder="เช่น E1001"></div>
             <div class="field"><label for="uName">ชื่อ-นามสกุล</label><input id="uName" required maxlength="80"></div>
             <div class="field"><label for="uDept">แผนก</label><select id="uDept" required></select></div>
             <div class="field"><label for="uRole">สิทธิ์</label><select id="uRole"></select></div>
-            <div class="field"><label for="uPin">PIN (ตัวเลข 4-12 หลัก)</label><input id="uPin" inputmode="numeric" maxlength="12" autocomplete="new-password"></div>
+            <div class="field"><label for="uPassword">รหัสผ่าน (12-128 ตัวอักษร)</label><input id="uPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" required></div>
             <label class="check"><input type="checkbox" id="uActive" checked> เปิดใช้งาน</label>
             <div class="uform-act">
               <button type="submit" class="primary" id="uSave">บันทึก</button>
@@ -621,7 +628,7 @@
         <section class="card">
           <div class="card-h"><h2>ผู้ใช้งานทั้งหมด <span class="muted" id="uCount"></span></h2></div>
           <div class="tbl max"><table>
-            <thead><tr><th>รหัสพนักงาน</th><th>ชื่อ-สกุล</th><th>แผนก</th><th>สิทธิ์</th><th class="num">สถานะ</th><th></th></tr></thead>
+            <thead><tr><th>รหัสพนักงาน / ชื่อผู้ใช้</th><th>ชื่อ-สกุล</th><th>แผนก</th><th>สิทธิ์</th><th class="num">สถานะ</th><th></th></tr></thead>
             <tbody id="uBody"></tbody>
           </table></div>
         </section>
@@ -644,6 +651,17 @@
   </div>
 </div>
 
+<dialog id="passwordDialog" aria-labelledby="passwordTitle">
+  <form id="passwordForm">
+    <h2 id="passwordTitle">เปลี่ยนรหัสผ่าน</h2>
+    <label for="oldPassword">รหัสผ่านเดิม</label><input id="oldPassword" type="password" autocomplete="current-password" maxlength="128" required>
+    <label for="newPassword">รหัสผ่านใหม่ (12-128 ตัวอักษร)</label><input id="newPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+    <label for="confirmPassword">ยืนยันรหัสผ่านใหม่</label><input id="confirmPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+    <div id="passwordError" class="err" role="alert"></div>
+    <button id="savePassword" type="submit" class="primary">บันทึกรหัสผ่าน</button>
+    <button id="cancelPassword" type="button" class="pill-btn">ยกเลิก</button>
+  </form>
+</dialog>
 <script>
   const $ = id => document.getElementById(id);
   const $$ = sel => Array.from(document.querySelectorAll(sel));
@@ -709,8 +727,13 @@
   function signOut(msg) {
     if (TOKEN) google.script.run.logout(TOKEN);
     TOKEN = ''; store.del('leave_token');
+    $('passwordDialog').close(); $('passwordForm').reset();
+    $('password').value = ''; $('password').type = 'password'; $('showPassword').checked = false;
+    USERS = []; usersLoaded = false;
     showGate(msg);
   }
+
+  $('showPassword').addEventListener('change', e => { $('password').type = e.target.checked ? 'text' : 'password'; });
 
   $('gate').addEventListener('submit', e => {
     e.preventDefault();
@@ -719,7 +742,7 @@
     google.script.run
       .withSuccessHandler(res => {
         TOKEN = res.token; store.set('leave_token', TOKEN);
-        $('pin').value = '';
+        $('password').value = ''; $('password').type = 'password'; $('showPassword').checked = false;
         $('loginBtn').disabled = false; $('loginBtn').textContent = 'เข้าสู่ระบบ';
         start(res.user);
       })
@@ -727,7 +750,7 @@
         $('gateErr').textContent = err.message;
         $('loginBtn').disabled = false; $('loginBtn').textContent = 'เข้าสู่ระบบ';
       })
-      .login($('loginId').value, $('pin').value);
+      .login($('loginId').value, $('password').value);
   });
 
   // กลับเข้าระบบอัตโนมัติถ้ายังมี token ที่ไม่หมดอายุ
@@ -774,14 +797,18 @@
   });
   document.addEventListener('click', () => { $('userDrop').hidden = true; });
   $('btnLogout').addEventListener('click', () => signOut());
-  $('btnPin').addEventListener('click', async () => {
-    const oldPin = prompt('PIN เดิม');
-    if (oldPin === null) return;
-    const newPin = prompt('PIN ใหม่ (ตัวเลข 4-12 หลัก)');
-    if (newPin === null) return;
-    if (prompt('ยืนยัน PIN ใหม่อีกครั้ง') !== newPin) { alert('PIN ใหม่ไม่ตรงกัน'); return; }
-    try { await call('changeMyPin', oldPin, newPin); signOut('เปลี่ยน PIN แล้ว กรุณาเข้าสู่ระบบด้วย PIN ใหม่'); }
-    catch (err) { alert(err.message); }
+  $('btnPassword').addEventListener('click', () => {
+    $('passwordForm').reset(); $('passwordError').textContent = ''; $('passwordDialog').showModal();
+  });
+  $('cancelPassword').addEventListener('click', () => $('passwordDialog').close());
+  $('passwordDialog').addEventListener('close', () => $('passwordForm').reset());
+  $('passwordForm').addEventListener('submit', async e => {
+    e.preventDefault(); $('passwordError').textContent = '';
+    if ($('newPassword').value !== $('confirmPassword').value) { $('passwordError').textContent = 'รหัสผ่านใหม่ไม่ตรงกัน'; return; }
+    $('savePassword').disabled = true;
+    try { await call('changeMyPassword', $('oldPassword').value, $('newPassword').value); signOut('เปลี่ยนรหัสผ่านแล้ว กรุณาเข้าสู่ระบบใหม่'); }
+    catch (err) { $('passwordError').textContent = err.message; }
+    finally { $('savePassword').disabled = false; }
   });
 
   // ---------- เมนู ----------
@@ -1178,10 +1205,10 @@
   }
 
   function renderUsers() {
-    const list = USERS.filter(u => !S.q || [u.empId, u.name, u.dept].some(v => String(v).toLowerCase().includes(S.q)));
+    const list = USERS.filter(u => !S.q || [u.empId, u.username, u.name, u.dept].some(v => String(v).toLowerCase().includes(S.q)));
     $('uCount').textContent = `(${USERS.filter(u => u.active).length} ใช้งาน / ${USERS.length} ทั้งหมด)`;
     $('uBody').innerHTML = list.length ? list.map(u => `
-      <tr><td><b>${esc(u.empId)}</b></td><td>${esc(u.name)}</td><td>${esc(u.dept)}</td>
+      <tr><td><b>${esc(u.empId)}</b><br><small>${esc(u.username)}</small>${!u.hasPassword ? '<br><small class="err">ต้องตั้งรหัสผ่านใหม่</small>' : ''}</td><td>${esc(u.name)}</td><td>${esc(u.dept)}</td>
         <td><span class="role role-${esc(u.role)}">${esc(u.roleName)}</span></td>
         <td class="num">${u.active ? '<span class="pill p-ok">ใช้งาน</span>' : '<span class="pill p-bad">ปิดใช้งาน</span>'}</td>
         <td><button class="linkbtn" data-edit="${esc(u.empId)}">แก้ไข</button></td></tr>`).join('')
@@ -1193,7 +1220,7 @@
     $('uEmp').readOnly = false;
     $('uActive').checked = true;
     $('uRole').value = 'employee';
-    $('uPin').placeholder = 'ผู้ใช้ใหม่ต้องตั้ง PIN';
+    $('uPassword').placeholder = 'ผู้ใช้ใหม่ต้องตั้งรหัสผ่าน'; $('uPassword').required = true;
     $('uFormTitle').textContent = 'เพิ่มผู้ใช้งาน';
     $('uMsg').className = 'msg';
   }
@@ -1205,9 +1232,11 @@
     const u = USERS.find(x => x.empId === b.dataset.edit);
     if (!u) return;
     $('uEmp').value = u.empId; $('uEmp').readOnly = true;
+    $('uUsername').value = u.username;
     $('uName').value = u.name; $('uDept').value = u.dept; $('uRole').value = u.role;
-    $('uActive').checked = u.active; $('uPin').value = '';
-    $('uPin').placeholder = 'เว้นว่าง = ใช้ PIN เดิม';
+    $('uActive').checked = u.active; $('uPassword').value = '';
+    $('uPassword').required = !u.hasPassword;
+    $('uPassword').placeholder = u.hasPassword ? 'เว้นว่าง = ใช้รหัสผ่านเดิม' : 'ต้องตั้งรหัสผ่านใหม่';
     $('uFormTitle').textContent = 'แก้ไขผู้ใช้งาน: ' + u.empId;
     $('uMsg').className = 'msg';
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1218,11 +1247,14 @@
     $('uMsg').className = 'msg';
     $('uSave').disabled = true;
     const editing = $('uEmp').readOnly;
+    const ownCredentialsChanged = USER.empId.toLowerCase() === $('uEmp').value.trim().toLowerCase() &&
+      ($('uPassword').value || $('uUsername').value.trim() !== USER.username);
     try {
       USERS = await call('saveUser', {
         empId: $('uEmp').value, name: $('uName').value, dept: $('uDept').value,
-        role: $('uRole').value, active: $('uActive').checked, pin: $('uPin').value
+        username: $('uUsername').value, role: $('uRole').value, active: $('uActive').checked, password: $('uPassword').value
       });
+      if (ownCredentialsChanged) { signOut('บันทึกข้อมูลแล้ว กรุณาเข้าสู่ระบบด้วยชื่อผู้ใช้และรหัสผ่านใหม่'); return; }
       const id = $('uEmp').value.trim();
       resetUserForm();
       $('uMsg').textContent = (editing ? 'บันทึกการแก้ไข ' : 'เพิ่มผู้ใช้ ') + id + ' แล้ว';

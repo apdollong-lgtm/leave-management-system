@@ -1,4 +1,5 @@
 **/**
 !Code.gs
+!PasswordCrypto.gs
 !Dashboard.html
 !appsscript.json
